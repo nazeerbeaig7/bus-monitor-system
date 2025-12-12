@@ -63,4 +63,4 @@ app.use('/management', managementRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});   
