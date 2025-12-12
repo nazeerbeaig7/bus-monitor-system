@@ -1,0 +1,129 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-bus"></i> Bus Monitoring System
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        
+        <% if(locals.user) { %>
+          <% if(user.role === 'student') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/student/dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/student/schedule">Schedule</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/student/track">Track Bus</a>
+            </li>
+          <% } else if(user.role === 'driver') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/driver/dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/driver/update-location">Update Location</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/driver/passengers">Passengers</a>
+            </li>
+          <% } else if(user.role === 'management') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/management/dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/management/buses">Manage Buses</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/management/students">Manage Students</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/management/reports">Reports</a>
+            </li>
+          <% } %>
+        <% } %>
+      </ul>
+      
+      <ul class="navbar-nav ms-auto">
+        <% if(locals.user) { %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user-circle me-1"></i> 
+              <% if(user.role === 'student') { %>
+                <%= user.name %>
+              <% } else if(user.role === 'driver') { %>
+                <%= user.driverName %> (Bus <%= user.busId %>)
+              <% } else if(user.role === 'management') { %>
+                <%= user.name %> (Admin)
+              <% } %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <% if(user.role === 'student') { %>
+                <li><a class="dropdown-item" href="/student/profile"><i class="fas fa-id-card me-2"></i> My Profile</a></li>
+              <% } else if(user.role === 'driver') { %>
+                <li><a class="dropdown-item" href="/driver/profile"><i class="fas fa-id-card me-2"></i> My Profile</a></li>
+              <% } %>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+            </ul>
+          </li>
+        <% } else { %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="loginDropdown">
+              <li><a class="dropdown-item" href="/login/student">Student Login</a></li>
+              <li><a class="dropdown-item" href="/login/driver">Driver Login</a></li>
+              <li><a class="dropdown-item" href="/login/management">Management Login</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="signupDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user-plus"></i> Sign Up
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="signupDropdown">
+              <li><a class="dropdown-item" href="/signup/student">Student Sign Up</a></li>
+            </ul>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div class="toast show bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header bg-success text-white">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong class="me-auto">Success</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        <%= success_msg %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div class="toast show bg-danger text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header bg-danger text-white">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <strong class="me-auto">Error</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        <%= error_msg %>
+      </div>
+    </div>
+  </div>
+<% } %> 

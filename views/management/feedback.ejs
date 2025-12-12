@@ -1,0 +1,393 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar-management') %>
+
+<div class="container animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-danger">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <i class="fas fa-comments text-danger me-2"></i> Student Feedback & Complaints
+          </h2>
+          
+          <% if (locals.error_msg) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+          <% } %>
+          
+          <% if (locals.success_msg) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+          <% } %>
+          
+          <!-- Tab navigation -->
+          <ul class="nav nav-tabs" id="feedbackTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="complaints-tab" data-bs-toggle="tab" data-bs-target="#complaints-content" 
+                      type="button" role="tab" aria-controls="complaints-content" aria-selected="true">
+                <i class="fas fa-exclamation-circle me-1"></i> 
+                Complaints
+                <% if (complaints.filter(c => !c.readByAdmin).length > 0) { %>
+                  <span class="badge bg-danger ms-1"><%= complaints.filter(c => !c.readByAdmin).length %></span>
+                <% } %>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-content" 
+                      type="button" role="tab" aria-controls="feedback-content" aria-selected="false">
+                <i class="fas fa-comment-dots me-1"></i> 
+                Feedback
+                <% if (feedback.filter(f => !f.readByAdmin).length > 0) { %>
+                  <span class="badge bg-primary ms-1"><%= feedback.filter(f => !f.readByAdmin).length %></span>
+                <% } %>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="resolved-tab" data-bs-toggle="tab" data-bs-target="#resolved-content" 
+                      type="button" role="tab" aria-controls="resolved-content" aria-selected="false">
+                <i class="fas fa-check-circle me-1"></i> Resolved Issues
+              </button>
+            </li>
+          </ul>
+          
+          <!-- Tab content -->
+          <div class="tab-content border border-top-0 rounded-bottom p-4" id="feedbackTabsContent">
+            <!-- Complaints Tab -->
+            <div class="tab-pane fade show active" id="complaints-content" role="tabpanel" aria-labelledby="complaints-tab">
+              <% if (complaints && complaints.length > 0 && complaints.filter(c => c.status !== 'resolved' && c.status !== 'closed').length > 0) { %>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Bus</th>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% complaints
+                          .filter(c => c.status !== 'resolved' && c.status !== 'closed')
+                          .sort((a, b) => {
+                            // Sort by unread first, then by severity (highest first), then by date (newest first)
+                            if (!a.readByAdmin && b.readByAdmin) return -1;
+                            if (a.readByAdmin && !b.readByAdmin) return 1;
+                            if (a.severity !== b.severity) return b.severity - a.severity;
+                            return new Date(b.createdAt) - new Date(a.createdAt);
+                          })
+                          .forEach(complaint => { 
+                      %>
+                        <tr class="<%= !complaint.readByAdmin ? 'table-warning' : '' %>">
+                          <td><%= new Date(complaint.createdAt).toLocaleDateString() %></td>
+                          <td><%= complaint.studentName %></td>
+                          <td>
+                            <% if (complaint.busName) { %>
+                              <%= complaint.busName %>
+                            <% } else { %>
+                              <span class="text-muted">N/A</span>
+                            <% } %>
+                          </td>
+                          <td>
+                            <% 
+                              let badgeClass = 'bg-secondary';
+                              switch(complaint.type) {
+                                case 'schedule': badgeClass = 'bg-info'; break;
+                                case 'behavior': badgeClass = 'bg-primary'; break;
+                                case 'cleanliness': badgeClass = 'bg-success'; break;
+                                case 'safety': badgeClass = 'bg-danger'; break;
+                                case 'technical': badgeClass = 'bg-warning text-dark'; break;
+                              }
+                            %>
+                            <span class="badge <%= badgeClass %>">
+                              <%= complaint.type.charAt(0).toUpperCase() + complaint.type.slice(1) %>
+                            </span>
+                          </td>
+                          <td><%= complaint.subject %></td>
+                          <td>
+                            <% 
+                              let severityBadge = 'bg-secondary';
+                              let severityText = 'Unknown';
+                              
+                              switch(complaint.severity) {
+                                case 1: 
+                                  severityBadge = 'bg-success'; 
+                                  severityText = 'Very Low';
+                                  break;
+                                case 2: 
+                                  severityBadge = 'bg-info'; 
+                                  severityText = 'Low';
+                                  break;
+                                case 3: 
+                                  severityBadge = 'bg-primary'; 
+                                  severityText = 'Medium';
+                                  break;
+                                case 4: 
+                                  severityBadge = 'bg-warning text-dark'; 
+                                  severityText = 'High';
+                                  break;
+                                case 5: 
+                                  severityBadge = 'bg-danger'; 
+                                  severityText = 'Critical';
+                                  break;
+                              }
+                            %>
+                            <span class="badge <%= severityBadge %>"><%= severityText %></span>
+                          </td>
+                          <td>
+                            <% 
+                              let statusBadge = 'bg-secondary';
+                              
+                              switch(complaint.status) {
+                                case 'open': statusBadge = 'bg-danger'; break;
+                                case 'investigating': statusBadge = 'bg-warning text-dark'; break;
+                                case 'action_taken': statusBadge = 'bg-info'; break;
+                              }
+                            %>
+                            <span class="badge <%= statusBadge %>">
+                              <%= complaint.status.replace('_', ' ').toUpperCase() %>
+                            </span>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary view-complaint-btn"
+                                    data-bs-toggle="modal" data-bs-target="#complaintModal"
+                                    data-id="<%= complaint._id %>"
+                                    data-student="<%= complaint.studentName %>"
+                                    data-subject="<%= complaint.subject %>"
+                                    data-message="<%= complaint.message %>"
+                                    data-type="<%= complaint.type %>"
+                                    data-severity="<%= complaint.severity %>"
+                                    data-status="<%= complaint.status %>"
+                                    data-created="<%= new Date(complaint.createdAt).toLocaleString() %>"
+                                    data-bus="<%= complaint.busName || 'N/A' %>">
+                              <i class="fas fa-eye"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="far fa-smile fa-4x text-muted mb-3"></i>
+                  <h5>No Active Complaints</h5>
+                  <p class="text-muted">There are currently no active complaints from students</p>
+                </div>
+              <% } %>
+            </div>
+            
+            <!-- Feedback Tab -->
+            <div class="tab-pane fade" id="feedback-content" role="tabpanel" aria-labelledby="feedback-tab">
+              <% if (feedback && feedback.length > 0) { %>
+                <div class="row">
+                  <% feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .forEach(item => { %>
+                    <div class="col-md-6 mb-4">
+                      <div class="card <%= !item.readByAdmin ? 'border-primary' : '' %>">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                          <h6 class="mb-0">
+                            <%= item.subject %>
+                            <% if (!item.readByAdmin) { %>
+                              <span class="badge bg-primary ms-2">New</span>
+                            <% } %>
+                          </h6>
+                          <small class="text-muted"><%= new Date(item.createdAt).toLocaleString() %></small>
+                        </div>
+                        <div class="card-body">
+                          <p class="card-text"><%= item.message %></p>
+                          <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                              <span class="badge bg-light text-dark">From: <%= item.studentName %></span>
+                              <% if (item.busName) { %>
+                                <span class="badge bg-light text-dark">Bus: <%= item.busName %></span>
+                              <% } %>
+                            </div>
+                            <% if (!item.readByAdmin) { %>
+                              <form action="/management/feedback/mark-read/<%= item._id %>" method="POST">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                  <i class="fas fa-check me-1"></i> Mark as Read
+                                </button>
+                              </form>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="far fa-comment-dots fa-4x text-muted mb-3"></i>
+                  <h5>No Feedback</h5>
+                  <p class="text-muted">No feedback has been submitted by students yet</p>
+                </div>
+              <% } %>
+            </div>
+            
+            <!-- Resolved Issues Tab -->
+            <div class="tab-pane fade" id="resolved-content" role="tabpanel" aria-labelledby="resolved-tab">
+              <% if (complaints && complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length > 0) { %>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Bus</th>
+                        <th>Issue</th>
+                        <th>Resolution</th>
+                        <th>Status</th>
+                        <th>Resolved On</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% complaints
+                          .filter(c => c.status === 'resolved' || c.status === 'closed')
+                          .sort((a, b) => new Date(b.resolvedAt) - new Date(a.resolvedAt))
+                          .forEach(complaint => { 
+                      %>
+                        <tr>
+                          <td><%= new Date(complaint.createdAt).toLocaleDateString() %></td>
+                          <td><%= complaint.studentName %></td>
+                          <td><%= complaint.busName || 'N/A' %></td>
+                          <td>
+                            <strong><%= complaint.subject %></strong><br>
+                            <small class="text-muted"><%= complaint.type.charAt(0).toUpperCase() + complaint.type.slice(1) %></small>
+                          </td>
+                          <td><%= complaint.adminResponse || 'No response provided' %></td>
+                          <td>
+                            <span class="badge <%= complaint.status === 'resolved' ? 'bg-success' : 'bg-secondary' %>">
+                              <%= complaint.status.toUpperCase() %>
+                            </span>
+                          </td>
+                          <td><%= complaint.resolvedAt ? new Date(complaint.resolvedAt).toLocaleDateString() : 'N/A' %></td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+                  <h5>No Resolved Issues</h5>
+                  <p class="text-muted">There are no resolved complaints yet</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complaint Modal -->
+<div class="modal fade" id="complaintModal" tabindex="-1" aria-labelledby="complaintModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p><strong>Student:</strong> <span id="modal-student"></span></p>
+            <p><strong>Bus:</strong> <span id="modal-bus"></span></p>
+            <p><strong>Date Submitted:</strong> <span id="modal-created"></span></p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Type:</strong> <span id="modal-type"></span></p>
+            <p><strong>Severity:</strong> <span id="modal-severity"></span></p>
+            <p><strong>Current Status:</strong> <span id="modal-status"></span></p>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header">
+            <strong id="modal-subject"></strong>
+          </div>
+          <div class="card-body">
+            <p id="modal-message"></p>
+          </div>
+        </div>
+        
+        <form id="complaintResponseForm" action="" method="POST">
+          <div class="mb-3">
+            <label for="status" class="form-label">Update Status</label>
+            <select class="form-select" id="status" name="status" required>
+              <option value="open">Open</option>
+              <option value="investigating">Investigating</option>
+              <option value="action_taken">Action Taken</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="adminResponse" class="form-label">Admin Response</label>
+            <textarea class="form-control" id="adminResponse" name="adminResponse" rows="4" 
+                      placeholder="Enter your response to this complaint..."></textarea>
+          </div>
+          
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Update Complaint</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle complaint modal
+    const complaintModal = document.getElementById('complaintModal');
+    const complaintButtons = document.querySelectorAll('.view-complaint-btn');
+    
+    complaintButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const student = this.dataset.student;
+        const subject = this.dataset.subject;
+        const message = this.dataset.message;
+        const type = this.dataset.type;
+        const severity = this.dataset.severity;
+        const status = this.dataset.status;
+        const created = this.dataset.created;
+        const bus = this.dataset.bus;
+        
+        // Update modal content
+        document.getElementById('modal-student').textContent = student;
+        document.getElementById('modal-subject').textContent = subject;
+        document.getElementById('modal-message').textContent = message;
+        document.getElementById('modal-type').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        document.getElementById('modal-created').textContent = created;
+        document.getElementById('modal-bus').textContent = bus;
+        
+        // Set severity text
+        let severityText = 'Unknown';
+        switch(parseInt(severity)) {
+          case 1: severityText = 'Very Low'; break;
+          case 2: severityText = 'Low'; break;
+          case 3: severityText = 'Medium'; break;
+          case 4: severityText = 'High'; break;
+          case 5: severityText = 'Critical'; break;
+        }
+        document.getElementById('modal-severity').textContent = severityText;
+        
+        // Set status text
+        document.getElementById('modal-status').textContent = status.replace('_', ' ').toUpperCase();
+        
+        // Set form action and select current status
+        document.getElementById('complaintResponseForm').action = `/management/complaints/update-status/${id}`;
+        document.getElementById('status').value = status;
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %> 

@@ -1,0 +1,286 @@
+<div class="container animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body d-md-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="card-title">
+              <i class="fas fa-bus text-primary me-2"></i> View Bus Details
+            </h2>
+            <p class="text-muted mb-md-0">Detailed information about the bus</p>
+          </div>
+          <div class="mt-3 mt-md-0">
+            <a href="/management/buses" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Back to List
+            </a>
+            <a href="/management/buses/edit/<%= bus._id %>" class="btn btn-primary ms-2">
+              <i class="fas fa-edit me-1"></i> Edit Bus
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4 mb-4 mb-md-0">
+      <div class="card shadow-sm h-100 animate__animated animate__fadeInUp animate__delay-1s">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i> Basic Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4">
+            <div class="bg-light p-3 rounded-circle d-inline-block mb-3">
+              <i class="fas fa-bus-alt fa-4x text-primary"></i>
+            </div>
+            <h4><%= bus.busName || 'College Bus' %></h4>
+            <span class="badge bg-<%= bus.isActive ? 'success' : 'warning text-dark' %> mb-2">
+              <%= bus.isActive ? 'Active' : 'Inactive' %>
+            </span>
+          </div>
+          
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+              <span><i class="fas fa-id-card text-primary me-2"></i> Bus ID:</span>
+              <strong><%= bus.busId %></strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><i class="fas fa-hashtag text-primary me-2"></i> Bus Number:</span>
+              <strong><%= bus.busNumber || 'Not Set' %></strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><i class="fas fa-car text-primary me-2"></i> Plate Number:</span>
+              <strong><%= bus.plateNumber || 'Not Set' %></strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><i class="fas fa-users text-primary me-2"></i> Capacity:</span>
+              <strong><%= bus.capacity %> passengers</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><i class="fas fa-calendar-alt text-primary me-2"></i> Added On:</span>
+              <strong><%= new Date(bus.createdAt).toLocaleDateString() %></strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4 mb-md-0">
+      <div class="card shadow-sm h-100 animate__animated animate__fadeInUp animate__delay-2s">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-user me-2"></i> Driver Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4">
+            <div class="bg-light p-3 rounded-circle d-inline-block mb-3">
+              <i class="fas fa-user-tie fa-4x text-success"></i>
+            </div>
+            <h4><%= bus.driverName %></h4>
+            <p class="text-muted">Bus Driver</p>
+          </div>
+          
+          <div class="mb-4">
+            <h6 class="border-bottom pb-2"><i class="fas fa-route text-success me-2"></i> Assigned Route</h6>
+            <p class="lead"><%= bus.route %></p>
+          </div>
+          
+          <div class="mb-4">
+            <h6 class="border-bottom pb-2"><i class="fas fa-map-marker-alt text-success me-2"></i> Current Location</h6>
+            <p class="lead"><%= bus.currentLocation || 'Campus' %></p>
+          </div>
+          
+          <div class="mb-4">
+            <h6 class="border-bottom pb-2"><i class="fas fa-chart-line text-success me-2"></i> Performance</h6>
+            <div class="stars mb-2">
+              <i class="fas fa-star text-warning"></i>
+              <i class="fas fa-star text-warning"></i>
+              <i class="fas fa-star text-warning"></i>
+              <i class="fas fa-star text-warning"></i>
+              <i class="fas fa-star-half-alt text-warning"></i>
+              <span class="ms-2">4.5/5</span>
+            </div>
+            <div class="progress" style="height: 10px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="text-end mt-1">
+              <small class="text-muted">Based on 18 reports</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-3s">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i> Status & Maintenance
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4">
+            <div class="bg-light p-3 rounded-circle d-inline-block mb-3">
+              <i class="fas fa-cogs fa-4x text-danger"></i>
+            </div>
+            <h4>Bus Health</h4>
+          </div>
+          
+          <div class="mb-4">
+            <h6>Fuel Status</h6>
+            <div class="progress mb-2" style="height: 25px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: <%= bus.fuelStatus || 70 %>%;" aria-valuenow="<%= bus.fuelStatus || 70 %>" aria-valuemin="0" aria-valuemax="100"><%= bus.fuelStatus || 70 %>%</div>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span><i class="fas fa-gas-pump text-muted"></i> Empty</span>
+              <span>Full <i class="fas fa-gas-pump text-success"></i></span>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h6>Engine Health</h6>
+            <div class="progress mb-2" style="height: 25px;">
+              <div class="progress-bar bg-info" role="progressbar" style="width: <%= bus.engineHealth || 85 %>%;" aria-valuenow="<%= bus.engineHealth || 85 %>" aria-valuemin="0" aria-valuemax="100"><%= bus.engineHealth || 85 %>%</div>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h6>Last Maintenance</h6>
+            <p class="d-flex justify-content-between">
+              <span><i class="fas fa-tools text-danger me-2"></i> Date:</span>
+              <strong><%= bus.lastMaintenanceDate ? new Date(bus.lastMaintenanceDate).toLocaleDateString() : 'Not recorded' %></strong>
+            </p>
+            <p class="d-flex justify-content-between">
+              <span><i class="fas fa-calendar-day text-danger me-2"></i> Next Due:</span>
+              <strong><%= bus.nextMaintenanceDate ? new Date(bus.nextMaintenanceDate).toLocaleDateString() : 'Not scheduled' %></strong>
+            </p>
+          </div>
+          
+          <div class="mb-2">
+            <h6>Recent Issues</h6>
+            <% if (bus.maintenanceIssues && bus.maintenanceIssues.length > 0) { %>
+              <ul class="list-group list-group-flush">
+                <% bus.maintenanceIssues.forEach(issue => { %>
+                  <li class="list-group-item d-flex align-items-center py-2">
+                    <span class="badge rounded-circle <%= issue.resolved ? 'bg-success' : 'bg-warning text-dark' %> me-2">
+                      <i class="fas <%= issue.resolved ? 'fa-check' : 'fa-exclamation' %>"></i>
+                    </span>
+                    <small><%= issue.issue %> (<%= new Date(issue.date).toLocaleDateString() %>)</small>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex align-items-center py-2">
+                  <span class="badge rounded-circle bg-success me-2">
+                    <i class="fas fa-check"></i>
+                  </span>
+                  <small>No recent maintenance issues reported</small>
+                </li>
+              </ul>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-8 mb-4 mb-md-0">
+      <div class="card shadow-sm animate__animated animate__fadeIn animate__delay-4s">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-week text-primary me-2"></i> Schedule
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Departure</th>
+                  <th>Arrival</th>
+                  <th>Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (bus.schedule && bus.schedule.length > 0) { %>
+                  <% bus.schedule.forEach(schedule => { %>
+                    <tr>
+                      <td><%= schedule.time %></td>
+                      <td><%= schedule.departure %></td>
+                      <td><%= schedule.arrival %></td>
+                      <td>
+                        <% schedule.days.forEach(day => { %>
+                          <span class="badge bg-primary me-1"><%= day %></span>
+                        <% }); %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="4" class="text-center">No schedule information available</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card shadow-sm animate__animated animate__fadeIn animate__delay-4s">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-history text-primary me-2"></i> Recent Activity
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <% if (bus.recentActivity && bus.recentActivity.length > 0) { %>
+              <% bus.recentActivity.forEach(activity => { %>
+                <div class="list-group-item">
+                  <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1"><%= activity.action %></h6>
+                    <small class="text-muted"><%= new Date(activity.timestamp).toLocaleString() %></small>
+                  </div>
+                  <p class="mb-1 small"><%= activity.details %></p>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">No Recent Activity</h6>
+                  <small class="text-muted">-</small>
+                </div>
+                <p class="mb-1 small">No activity has been recorded for this bus yet.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <a href="#" class="btn btn-sm btn-outline-primary">View All Activity</a>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm mt-4 animate__animated animate__fadeIn animate__delay-5s">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-qrcode text-primary me-2"></i> Quick Access
+          </h5>
+        </div>
+        <div class="card-body text-center">
+          <div class="bg-light p-4 rounded mb-3">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=BUS:<%= bus.busId %>" alt="QR Code" class="img-fluid">
+          </div>
+          <p class="text-muted small">Scan this QR code to quickly access this bus information on mobile devices.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

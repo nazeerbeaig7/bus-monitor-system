@@ -1,0 +1,116 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0">
+              <i class="fas fa-bus text-primary me-2"></i> Available Buses
+            </h2>
+            <a href="/student/dashboard" class="btn btn-outline-primary">
+              <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (locals.error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
+  <% } %>
+  
+  <% if (locals.success_msg) { %>
+    <div class="alert alert-success"><%= success_msg %></div>
+  <% } %>
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">All Active Buses</h5>
+        </div>
+        <div class="card-body">
+          <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+            <div class="row">
+              <% buses.forEach(bus => { %>
+                <div class="col-lg-6 mb-4">
+                  <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><%= bus.busName %> (#<%= bus.busId %>)</h5>
+                        <span class="badge rounded-pill bg-light text-primary">
+                          <%= bus.route %>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <p><strong>Driver:</strong> <%= bus.driverName %></p>
+                          <p><strong>Current Location:</strong> <%= bus.currentLocation || 'Not specified' %></p>
+                        </div>
+                        <div class="col-md-6">
+                          <p><strong>Capacity:</strong> <%= bus.capacity %> seats</p>
+                          <p>
+                            <strong>Status:</strong> 
+                            <% if (bus.isActive) { %>
+                              <span class="badge bg-success">Active</span>
+                            <% } else { %>
+                              <span class="badge bg-warning text-dark">Inactive</span>
+                            <% } %>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <h6>Today's Schedule</h6>
+                        <% 
+                          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                          const today = days[new Date().getDay()];
+                          const todaySchedules = bus.schedule ? bus.schedule.filter(s => s.days.includes(today)) : [];
+                        %>
+                        
+                        <% if (todaySchedules.length > 0) { %>
+                          <ul class="list-group list-group-flush">
+                            <% todaySchedules.forEach(schedule => { %>
+                              <li class="list-group-item">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <%= schedule.time %> - <%= schedule.departure %> to <%= schedule.arrival %>
+                              </li>
+                            <% }); %>
+                          </ul>
+                        <% } else { %>
+                          <p class="text-muted">No schedules available for today</p>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <div class="d-flex justify-content-between">
+                        <a href="/student/schedule?busId=<%= bus.busId %>" class="btn btn-outline-primary">
+                          <i class="fas fa-calendar-alt me-1"></i> Full Schedule
+                        </a>
+                        <a href="/student/track/<%= bus.busId %>" class="btn btn-primary">
+                          <i class="fas fa-map-marker-alt me-1"></i> Track This Bus
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i> No active buses available at the moment.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %> 

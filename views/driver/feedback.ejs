@@ -1,0 +1,367 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar-driver') %>
+
+<div class="container animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-success">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <i class="fas fa-comments text-success me-2"></i> Student Feedback
+          </h2>
+          
+          <% if (locals.error_msg) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+          <% } %>
+          
+          <% if (locals.success_msg) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+          <% } %>
+          
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="text-muted mb-0">View and respond to feedback from students about your bus service.</p>
+            <a href="/driver/dashboard" class="btn btn-outline-success">
+              <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+          </div>
+          
+          <!-- Feedback tabs -->
+          <ul class="nav nav-tabs" id="feedbackTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" 
+                      type="button" role="tab" aria-controls="unread" aria-selected="true">
+                <i class="fas fa-envelope me-1"></i> Unread
+                <% if (feedback.filter(f => !f.readByDriver).length > 0) { %>
+                  <span class="badge bg-danger ms-1"><%= feedback.filter(f => !f.readByDriver).length %></span>
+                <% } %>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" 
+                      type="button" role="tab" aria-controls="all" aria-selected="false">
+                <i class="fas fa-list me-1"></i> All Feedback
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="responded-tab" data-bs-toggle="tab" data-bs-target="#responded" 
+                      type="button" role="tab" aria-controls="responded" aria-selected="false">
+                <i class="fas fa-reply me-1"></i> Responded
+              </button>
+            </li>
+          </ul>
+          
+          <div class="tab-content border border-top-0 rounded-bottom p-4" id="feedbackTabsContent">
+            <!-- Unread Feedback -->
+            <div class="tab-pane fade show active" id="unread" role="tabpanel" aria-labelledby="unread-tab">
+              <% if (feedback.filter(f => !f.readByDriver).length > 0) { %>
+                <div class="row">
+                  <% feedback.filter(f => !f.readByDriver)
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .forEach(item => { %>
+                    <div class="col-md-6 mb-4">
+                      <div class="card border-primary h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                          <h5 class="mb-0"><%= item.subject %></h5>
+                          <span class="badge bg-light text-primary">NEW</span>
+                        </div>
+                        <div class="card-body">
+                          <p class="card-text"><%= item.message %></p>
+                          <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                              <small class="text-muted">
+                                From: <%= item.studentName %><br>
+                                Submitted: <%= new Date(item.createdAt).toLocaleString() %>
+                              </small>
+                            </div>
+                            <div class="d-flex">
+                              <form action="/driver/feedback/mark-read/<%= item._id %>" method="POST" class="me-2">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                  <i class="fas fa-check me-1"></i> Mark as Read
+                                </button>
+                              </form>
+                              <button type="button" class="btn btn-sm btn-success respond-btn"
+                                      data-bs-toggle="modal" data-bs-target="#responseModal"
+                                      data-id="<%= item._id %>"
+                                      data-subject="<%= item.subject %>"
+                                      data-message="<%= item.message %>"
+                                      data-student="<%= item.studentName %>">
+                                <i class="fas fa-reply me-1"></i> Respond
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="far fa-envelope-open fa-4x text-muted mb-3"></i>
+                  <h5>No Unread Feedback</h5>
+                  <p class="text-muted">You have read all feedback from students.</p>
+                </div>
+              <% } %>
+            </div>
+            
+            <!-- All Feedback -->
+            <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+              <% if (feedback.length > 0) { %>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                         .forEach(item => { %>
+                        <tr class="<%= !item.readByDriver ? 'table-primary' : '' %>">
+                          <td><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                          <td><%= item.studentName %></td>
+                          <td><%= item.subject %></td>
+                          <td>
+                            <% if (item.driverResponse) { %>
+                              <span class="badge bg-success">Responded</span>
+                            <% } else if (item.readByDriver) { %>
+                              <span class="badge bg-secondary">Read</span>
+                            <% } else { %>
+                              <span class="badge bg-primary">New</span>
+                            <% } %>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary view-feedback-btn"
+                                    data-bs-toggle="modal" data-bs-target="#viewFeedbackModal"
+                                    data-id="<%= item._id %>"
+                                    data-subject="<%= item.subject %>"
+                                    data-message="<%= item.message %>"
+                                    data-student="<%= item.studentName %>"
+                                    data-created="<%= new Date(item.createdAt).toLocaleString() %>"
+                                    data-response="<%= item.driverResponse || '' %>">
+                              <i class="fas fa-eye"></i>
+                            </button>
+                            
+                            <% if (!item.driverResponse) { %>
+                              <button type="button" class="btn btn-sm btn-outline-success respond-btn ms-1"
+                                      data-bs-toggle="modal" data-bs-target="#responseModal"
+                                      data-id="<%= item._id %>"
+                                      data-subject="<%= item.subject %>"
+                                      data-message="<%= item.message %>"
+                                      data-student="<%= item.studentName %>">
+                                <i class="fas fa-reply"></i>
+                              </button>
+                            <% } %>
+                            
+                            <% if (!item.readByDriver) { %>
+                              <form action="/driver/feedback/mark-read/<%= item._id %>" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary ms-1">
+                                  <i class="fas fa-check"></i>
+                                </button>
+                              </form>
+                            <% } %>
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="far fa-comment-alt fa-4x text-muted mb-3"></i>
+                  <h5>No Feedback</h5>
+                  <p class="text-muted">You haven't received any feedback yet.</p>
+                </div>
+              <% } %>
+            </div>
+            
+            <!-- Responded Feedback -->
+            <div class="tab-pane fade" id="responded" role="tabpanel" aria-labelledby="responded-tab">
+              <% if (feedback.filter(f => f.driverResponse).length > 0) { %>
+                <div class="row">
+                  <% feedback.filter(f => f.driverResponse)
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .forEach(item => { %>
+                    <div class="col-md-6 mb-4">
+                      <div class="card border-success h-100">
+                        <div class="card-header bg-success text-white">
+                          <h5 class="mb-0"><%= item.subject %></h5>
+                        </div>
+                        <div class="card-body">
+                          <div class="mb-3">
+                            <h6 class="mb-2">Student Feedback:</h6>
+                            <p class="card-text bg-light p-3 rounded"><%= item.message %></p>
+                          </div>
+                          <div>
+                            <h6 class="mb-2">Your Response:</h6>
+                            <p class="card-text bg-success-subtle p-3 rounded"><%= item.driverResponse %></p>
+                          </div>
+                          <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                              From: <%= item.studentName %><br>
+                              Submitted: <%= new Date(item.createdAt).toLocaleString() %>
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="far fa-paper-plane fa-4x text-muted mb-3"></i>
+                  <h5>No Responses Sent</h5>
+                  <p class="text-muted">You haven't responded to any feedback yet.</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Feedback Modal -->
+<div class="modal fade" id="viewFeedbackModal" tabindex="-1" aria-labelledby="viewFeedbackModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewFeedbackModalLabel">Feedback Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <h6 id="view-subject" class="mb-2"></h6>
+          <p class="text-muted mb-3">
+            From <span id="view-student"></span> on <span id="view-date"></span>
+          </p>
+          <p id="view-message" class="bg-light p-3 rounded"></p>
+        </div>
+        <div id="view-response-section" class="mb-3 d-none">
+          <h6 class="mb-2">Your Response:</h6>
+          <p id="view-response" class="bg-success-subtle p-3 rounded"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="view-respond-btn">
+          <i class="fas fa-reply me-1"></i> Respond
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Response Modal -->
+<div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="responseModalLabel">Respond to Feedback</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <h6 id="response-subject" class="mb-2"></h6>
+          <p class="text-muted mb-2">From <span id="response-student"></span></p>
+          <p id="response-message" class="bg-light p-3 rounded"></p>
+        </div>
+        
+        <form id="responseForm" action="" method="POST">
+          <div class="mb-3">
+            <label for="response" class="form-label">Your Response</label>
+            <textarea class="form-control" id="response" name="response" rows="5" placeholder="Enter your response to this feedback..." required></textarea>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-paper-plane me-1"></i> Send Response
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle the view feedback modal
+    const viewFeedbackBtns = document.querySelectorAll('.view-feedback-btn');
+    
+    viewFeedbackBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Get data attributes
+        const id = this.dataset.id;
+        const subject = this.dataset.subject;
+        const message = this.dataset.message;
+        const student = this.dataset.student;
+        const created = this.dataset.created;
+        const response = this.dataset.response;
+        
+        // Update modal content
+        document.getElementById('view-subject').textContent = subject;
+        document.getElementById('view-message').textContent = message;
+        document.getElementById('view-student').textContent = student;
+        document.getElementById('view-date').textContent = created;
+        
+        // Handle response section
+        const responseSection = document.getElementById('view-response-section');
+        const respondBtn = document.getElementById('view-respond-btn');
+        
+        if (response) {
+          responseSection.classList.remove('d-none');
+          document.getElementById('view-response').textContent = response;
+          respondBtn.classList.add('d-none');
+        } else {
+          responseSection.classList.add('d-none');
+          respondBtn.classList.remove('d-none');
+          
+          // Set up the respond button to open the response modal
+          respondBtn.addEventListener('click', function() {
+            document.getElementById('viewFeedbackModal').classList.remove('show');
+            document.querySelector('.modal-backdrop').remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            
+            // Trigger the response modal
+            const responseModal = new bootstrap.Modal(document.getElementById('responseModal'));
+            
+            // Set the response modal data
+            document.getElementById('response-subject').textContent = subject;
+            document.getElementById('response-message').textContent = message;
+            document.getElementById('response-student').textContent = student;
+            document.getElementById('responseForm').action = `/driver/feedback/respond/${id}`;
+            
+            responseModal.show();
+          });
+        }
+      });
+    });
+    
+    // Handle the respond modal directly from the list
+    const respondBtns = document.querySelectorAll('.respond-btn');
+    
+    respondBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Get data attributes
+        const id = this.dataset.id;
+        const subject = this.dataset.subject;
+        const message = this.dataset.message;
+        const student = this.dataset.student;
+        
+        // Update modal content
+        document.getElementById('response-subject').textContent = subject;
+        document.getElementById('response-message').textContent = message;
+        document.getElementById('response-student').textContent = student;
+        document.getElementById('responseForm').action = `/driver/feedback/respond/${id}`;
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %> 

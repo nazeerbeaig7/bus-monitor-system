@@ -1,0 +1,414 @@
+<div class="container animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body d-md-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="card-title">
+              <i class="fas fa-map-marker-alt text-primary me-2"></i> Update Location
+            </h2>
+            <p class="text-muted mb-md-0">Set your current location, boarding point and destination</p>
+          </div>
+          <div class="mt-3 mt-md-0">
+            <a href="/driver/dashboard" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+        <div class="alert alert-danger animate__animated animate__shakeX">
+          <%= error_msg %>
+        </div>
+      <% } %>
+      <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+        <div class="alert alert-success animate__animated animate__bounceIn">
+          <%= success_msg %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4 mb-4 mb-md-0">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-cog me-2"></i> Map Controls
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="locationForm" action="/driver/update-location" method="POST">
+            <input type="hidden" id="currentLat" name="currentLat">
+            <input type="hidden" id="currentLon" name="currentLon">
+            <input type="hidden" id="boardingLat" name="boardingLat" value="<%= typeof user.bus !== 'undefined' && user.bus.boardingPoint && user.bus.boardingPoint.lat ? user.bus.boardingPoint.lat : '' %>">
+            <input type="hidden" id="boardingLon" name="boardingLon" value="<%= typeof user.bus !== 'undefined' && user.bus.boardingPoint && user.bus.boardingPoint.lon ? user.bus.boardingPoint.lon : '' %>">
+            <input type="hidden" id="destinationLat" name="destinationLat" value="<%= typeof user.bus !== 'undefined' && user.bus.destinationPoint && user.bus.destinationPoint.lat ? user.bus.destinationPoint.lat : '' %>">
+            <input type="hidden" id="destinationLon" name="destinationLon" value="<%= typeof user.bus !== 'undefined' && user.bus.destinationPoint && user.bus.destinationPoint.lon ? user.bus.destinationPoint.lon : '' %>">
+            
+            <div class="mb-3">
+              <div class="d-grid">
+                <button type="button" id="getCurrentLocation" class="btn btn-primary mb-2">
+                  <i class="fas fa-crosshairs me-2"></i> Get My Current Location
+                </button>
+              </div>
+              <div id="currentLocationStatus" class="small text-muted text-center mt-1">Waiting for location...</div>
+            </div>
+            
+            <hr>
+            
+            <div class="mb-3">
+              <label class="form-label"><i class="fas fa-map-pin text-danger me-2"></i> Boarding Point</label>
+              <div class="input-group mb-2">
+                <span class="input-group-text"><i class="fas fa-edit"></i></span>
+                <input type="text" class="form-control" id="boardingPointName" name="boardingPointName" placeholder="Name this location" value="<%= typeof user.bus !== 'undefined' && user.bus.boardingPoint && user.bus.boardingPoint.name ? user.bus.boardingPoint.name : '' %>">
+              </div>
+              <div class="small text-muted mb-2">Click on the map to set boarding point</div>
+              <div id="boardingPointCoords" class="small fw-bold text-primary">
+                <% if(typeof user.bus !== 'undefined' && user.bus.boardingPoint && user.bus.boardingPoint.lat && user.bus.boardingPoint.lon) { %>
+                  Lat: <%= user.bus.boardingPoint.lat.toFixed(6) %>, Lon: <%= user.bus.boardingPoint.lon.toFixed(6) %>
+                <% } else { %>
+                  Not set
+                <% } %>
+              </div>
+            </div>
+            
+            <hr>
+            
+            <div class="mb-3">
+              <label class="form-label"><i class="fas fa-flag-checkered text-success me-2"></i> Destination Point</label>
+              <div class="input-group mb-2">
+                <span class="input-group-text"><i class="fas fa-edit"></i></span>
+                <input type="text" class="form-control" id="destinationPointName" name="destinationPointName" placeholder="Name this location" value="<%= typeof user.bus !== 'undefined' && user.bus.destinationPoint && user.bus.destinationPoint.name ? user.bus.destinationPoint.name : '' %>">
+              </div>
+              <div class="small text-muted mb-2">Hold SHIFT + click on the map to set destination</div>
+              <div id="destinationPointCoords" class="small fw-bold text-success">
+                <% if(typeof user.bus !== 'undefined' && user.bus.destinationPoint && user.bus.destinationPoint.lat && user.bus.destinationPoint.lon) { %>
+                  Lat: <%= user.bus.destinationPoint.lat.toFixed(6) %>, Lon: <%= user.bus.destinationPoint.lon.toFixed(6) %>
+                <% } else { %>
+                  Not set
+                <% } %>
+              </div>
+            </div>
+            
+            <hr>
+            
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-2"></i> Save Location Data
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-map me-2"></i> Interactive Map
+          </h5>
+          <div>
+            <button type="button" id="resetMapView" class="btn btn-light btn-sm">
+              <i class="fas fa-sync-alt me-1"></i> Reset View
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div id="map" style="height: 600px; width: 100%; z-index: 1;"></div>
+        </div>
+        <div class="card-footer bg-light">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <i class="fas fa-map-marker-alt text-primary me-1"></i> <small>Current Location</small>
+            </div>
+            <div class="col-md-4 text-center">
+              <i class="fas fa-map-pin text-danger me-1"></i> <small>Boarding Point</small>
+            </div>
+            <div class="col-md-4 text-center">
+              <i class="fas fa-flag-checkered text-success me-1"></i> <small>Destination</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    const map = L.map('map').setView([20.5937, 78.9629], 5); // Default view is India
+    
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Define marker icons
+    const currentLocationIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+    
+    const boardingIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+    
+    const destinationIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+    
+    // Create markers
+    let currentLocationMarker = null;
+    let boardingMarker = null;
+    let destinationMarker = null;
+    let routeLine = null;
+    
+    // Load existing boarding point if available
+    const boardingLat = document.getElementById('boardingLat').value;
+    const boardingLon = document.getElementById('boardingLon').value;
+    if (boardingLat && boardingLon) {
+      const boardingLatNum = parseFloat(boardingLat);
+      const boardingLonNum = parseFloat(boardingLon);
+      boardingMarker = L.marker([boardingLatNum, boardingLonNum], {icon: boardingIcon})
+        .addTo(map)
+        .bindPopup("Boarding Point: " + (document.getElementById('boardingPointName').value || 'Not named'));
+    }
+    
+    // Load existing destination point if available
+    const destLat = document.getElementById('destinationLat').value;
+    const destLon = document.getElementById('destinationLon').value;
+    if (destLat && destLon) {
+      const destLatNum = parseFloat(destLat);
+      const destLonNum = parseFloat(destLon);
+      destinationMarker = L.marker([destLatNum, destLonNum], {icon: destinationIcon})
+        .addTo(map)
+        .bindPopup("Destination: " + (document.getElementById('destinationPointName').value || 'Not named'));
+      
+      // If both boarding and destination are set, draw a line between them
+      if (boardingMarker) {
+        drawRouteLine();
+      }
+      
+      // Adjust map view to include both markers
+      if (boardingMarker) {
+        const bounds = L.latLngBounds([
+          [boardingLatNum, boardingLonNum],
+          [destLatNum, destLonNum]
+        ]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } else {
+        map.setView([destLatNum, destLonNum], 14);
+      }
+    } else if (boardingMarker) {
+      // If only boarding point is set
+      map.setView([parseFloat(boardingLat), parseFloat(boardingLon)], 14);
+    }
+    
+    // Handle map clicks for setting points
+    map.on('click', function(e) {
+      if (e.originalEvent.shiftKey) {
+        // Shift + click sets destination
+        setDestinationPoint(e.latlng.lat, e.latlng.lng);
+      } else {
+        // Regular click sets boarding point
+        setBoardingPoint(e.latlng.lat, e.latlng.lng);
+      }
+      
+      // If both points are set, draw the route line
+      if (boardingMarker && destinationMarker) {
+        drawRouteLine();
+      }
+    });
+    
+    // Function to draw a dotted line between boarding and destination
+    function drawRouteLine() {
+      if (routeLine) {
+        map.removeLayer(routeLine);
+      }
+      
+      const boardingLatLng = boardingMarker.getLatLng();
+      const destinationLatLng = destinationMarker.getLatLng();
+      
+      routeLine = L.polyline([
+        [boardingLatLng.lat, boardingLatLng.lng],
+        [destinationLatLng.lat, destinationLatLng.lng]
+      ], {
+        color: 'blue',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '10, 10',
+        lineJoin: 'round'
+      }).addTo(map);
+      
+      // Adjust map to show both points
+      const bounds = L.latLngBounds([
+        [boardingLatLng.lat, boardingLatLng.lng],
+        [destinationLatLng.lat, destinationLatLng.lng]
+      ]);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+    
+    // Function to set the boarding point
+    function setBoardingPoint(lat, lng) {
+      // Update hidden form fields
+      document.getElementById('boardingLat').value = lat;
+      document.getElementById('boardingLon').value = lng;
+      
+      // Update displayed coordinates
+      document.getElementById('boardingPointCoords').innerHTML = `Lat: ${lat.toFixed(6)}, Lon: ${lng.toFixed(6)}`;
+      
+      // Update or create the marker
+      if (boardingMarker) {
+        map.removeLayer(boardingMarker);
+      }
+      
+      boardingMarker = L.marker([lat, lng], { icon: boardingIcon })
+        .addTo(map)
+        .bindPopup("Boarding Point: " + (document.getElementById('boardingPointName').value || 'Not named'))
+        .openPopup();
+    }
+    
+    // Function to set the destination point
+    function setDestinationPoint(lat, lng) {
+      // Update hidden form fields
+      document.getElementById('destinationLat').value = lat;
+      document.getElementById('destinationLon').value = lng;
+      
+      // Update displayed coordinates
+      document.getElementById('destinationPointCoords').innerHTML = `Lat: ${lat.toFixed(6)}, Lon: ${lng.toFixed(6)}`;
+      
+      // Update or create the marker
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+      }
+      
+      destinationMarker = L.marker([lat, lng], { icon: destinationIcon })
+        .addTo(map)
+        .bindPopup("Destination: " + (document.getElementById('destinationPointName').value || 'Not named'))
+        .openPopup();
+    }
+    
+    // Get current location button
+    document.getElementById('getCurrentLocation').addEventListener('click', function() {
+      const statusEl = document.getElementById('currentLocationStatus');
+      statusEl.innerHTML = '<span class="text-primary">Getting location...</span>';
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Update hidden form fields
+            document.getElementById('currentLat').value = lat;
+            document.getElementById('currentLon').value = lon;
+            
+            // Update status
+            statusEl.innerHTML = `<span class="text-success">Location acquired: ${lat.toFixed(6)}, ${lon.toFixed(6)}</span>`;
+            
+            // Update or create the marker
+            if (currentLocationMarker) {
+              map.removeLayer(currentLocationMarker);
+            }
+            
+            currentLocationMarker = L.marker([lat, lon], { icon: currentLocationIcon })
+              .addTo(map)
+              .bindPopup("Current Location")
+              .openPopup();
+            
+            // Center map on current location
+            map.setView([lat, lon], 14);
+          },
+          function(error) {
+            let errorMessage = 'Unknown error';
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out';
+                break;
+            }
+            statusEl.innerHTML = `<span class="text-danger">Error: ${errorMessage}</span>`;
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      } else {
+        statusEl.innerHTML = '<span class="text-danger">Geolocation not supported by your browser</span>';
+      }
+    });
+    
+    // Reset map view button
+    document.getElementById('resetMapView').addEventListener('click', function() {
+      if (boardingMarker && destinationMarker) {
+        const boardingLatLng = boardingMarker.getLatLng();
+        const destinationLatLng = destinationMarker.getLatLng();
+        
+        const bounds = L.latLngBounds([
+          [boardingLatLng.lat, boardingLatLng.lng],
+          [destinationLatLng.lat, destinationLatLng.lng]
+        ]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } else if (boardingMarker) {
+        map.setView(boardingMarker.getLatLng(), 14);
+      } else if (destinationMarker) {
+        map.setView(destinationMarker.getLatLng(), 14);
+      } else if (currentLocationMarker) {
+        map.setView(currentLocationMarker.getLatLng(), 14);
+      } else {
+        map.setView([20.5937, 78.9629], 5); // Default view is India
+      }
+    });
+    
+    // Input field events to update popup content
+    document.getElementById('boardingPointName').addEventListener('input', function() {
+      if (boardingMarker) {
+        boardingMarker.setPopupContent("Boarding Point: " + (this.value || 'Not named'));
+      }
+    });
+    
+    document.getElementById('destinationPointName').addEventListener('input', function() {
+      if (destinationMarker) {
+        destinationMarker.setPopupContent("Destination: " + (this.value || 'Not named'));
+      }
+    });
+  });
+</script> 

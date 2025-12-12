@@ -1,0 +1,166 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0">
+              <i class="fas fa-calendar-alt text-success me-2"></i> Bus Schedule
+            </h2>
+            <a href="/student/dashboard" class="btn btn-outline-success">
+              <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (error_msg) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= error_msg %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  
+  <% if (success_msg) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= success_msg %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-lg-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Filter Options</h5>
+        </div>
+        <div class="card-body">
+          <form method="GET" action="/student/schedule">
+            <div class="mb-3">
+              <label for="busSelect" class="form-label">Select Bus</label>
+              <select id="busSelect" name="busId" class="form-select" onchange="this.form.submit()">
+                <option value="">All Buses</option>
+                <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+                  <% buses.forEach(bus => { %>
+                    <option value="<%= bus.busId %>" <%= selectedBusId === bus.busId ? 'selected' : '' %>>
+                      <%= bus.busName %> (#<%= bus.busId %>)
+                    </option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="daySelect" class="form-label">Select Day</label>
+              <select id="daySelect" name="day" class="form-select" onchange="this.form.submit()">
+                <% ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => { %>
+                  <option value="<%= day %>" <%= selectedDay === day ? 'selected' : '' %>>
+                    <%= day %><%= day === today ? ' (Today)' : '' %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-9">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-clock me-2 text-success"></i> 
+            <% if (selectedBus) { %>
+              <%= selectedBus.busName %> Schedule
+              <span class="badge bg-<%= selectedBus.isActive ? 'success' : 'secondary' %> ms-2">
+                <%= selectedBus.isActive ? 'Active' : 'Inactive' %>
+              </span>
+            <% } else { %>
+              Select a Bus
+            <% } %>
+          </h5>
+          <button id="refreshBtn" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+          </button>
+        </div>
+        
+        <div class="card-body">
+          <% if (selectedBus) { 
+              const daySchedules = selectedBus.schedule ? 
+                selectedBus.schedule.filter(s => s.days && s.days.includes(selectedDay)) : []; 
+          %>
+            <% if (daySchedules.length > 0) { %>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Departure</th>
+                      <th>Arrival</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% daySchedules
+                        .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+                        .forEach(schedule => { 
+                          const time = schedule.time || '';
+                          const [hours, minutes] = time.split(':').map(Number);
+                          const now = new Date();
+                          const isPast = !isNaN(hours) && 
+                                       (now.getHours() > hours || 
+                                       (now.getHours() === hours && now.getMinutes() > minutes));
+                          const status = isPast ? 'Completed' : 'Upcoming';
+                        %>
+                      <tr>
+                        <td><%= time %></td>
+                        <td><%= schedule.departure || 'N/A' %></td>
+                        <td><%= schedule.arrival || 'N/A' %></td>
+                        <td>
+                          <span class="badge bg-<%= isPast ? 'secondary' : 'success' %>">
+                            <%= status %>
+                          </span>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h5>No schedule available for <%= selectedDay %></h5>
+                <p class="text-muted">Please select a different day or contact support</p>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="text-center py-4">
+              <i class="fas fa-bus fa-4x text-muted mb-3"></i>
+              <h4>Select a bus to view schedule</h4>
+              <p class="text-muted">Choose a bus from the dropdown to see its schedule</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Refresh button functionality
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        window.location.reload();
+      });
+    }
+  });
+</script>

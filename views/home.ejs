@@ -1,0 +1,50 @@
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8 text-center">
+    <h1 class="animate__animated animate__fadeInDown">
+      <i class="fas fa-bus-alt text-primary"></i> 
+      <%= title %>
+    </h1>
+    <p class="lead mt-4 animate__animated animate__fadeIn animate__delay-1s">
+      <%= welcomeMessage %> 
+    </p>
+    <div class="mt-5 animate__animated animate__fadeInUp animate__delay-2s">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+              <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+              <h5 class="card-title">Students</h5>
+              <p class="card-text">Track your bus 🚌, schedule rides, and view your travel history.</p>
+              <a href="/login/student" class="btn btn-primary">Student Login</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+              <i class="fas fa-id-card fa-3x text-success mb-3"></i>
+              <h5 class="card-title">Drivers</h5>
+              <p class="card-text">Manage your route 🛣️, view passenger list, and update status.</p>
+              <a href="/login/driver" class="btn btn-success">Driver Login</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+              <i class="fas fa-user-tie fa-3x text-danger mb-3"></i>
+              <h5 class="card-title">Management</h5>
+              <p class="card-text">Monitor fleet 🔍, generate reports, and manage staff.</p>
+              <a href="/login/management" class="btn btn-danger">Management Login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 animate__animated animate__fadeIn animate__delay-3s">
+      <div class="alert alert-info shadow-sm">
+        <i class="fas fa-info-circle"></i> This system helps track bus driver behavior and enhances safety for all passengers. 🚌 🛡️
+      </div>
+    </div>
+  </div>
+</div> 

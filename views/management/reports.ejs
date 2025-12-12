@@ -1,0 +1,444 @@
+<%- include('../partials/header', { title: 'Reports & Analytics' }) %>
+<%- include('../partials/navbar-management') %>
+
+<div class="container-fluid py-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Reports & Analytics</h1>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-download me-2"></i>Export
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+        <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+        <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Date Range Picker -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-filter me-2"></i>Apply Filter
+          </button>
+        </div>
+        <div class="col-md-3 d-flex align-items-end justify-content-end">
+          <button type="button" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-sync-alt me-2"></i>Refresh
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Students</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">1,234</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-users fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Active Buses</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">24</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-bus fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Pending Complaints</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-comments fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Avg. Bus Occupancy</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">78%</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-percent fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row">
+    <!-- Bus Utilization Chart -->
+    <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Bus Utilization Overview</h6>
+          <div class="dropdown no-arrow">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+              <li><a class="dropdown-item" href="#">Export Data</a></li>
+              <li><a class="dropdown-item" href="#">Print</a></li>
+              <li><a class="dropdown-item" href="#">Refresh</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="card-body
+        <div class="chart-area">
+          <canvas id="busUtilizationChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route Performance -->
+  <div class="col-xl-4 col-lg-5">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Top Performing Routes</h6>
+      </div>
+      <div class="card-body">
+        <div class="chart-pie pt-4 pb-2">
+          <canvas id="routePerformanceChart"></canvas>
+        </div>
+        <div class="mt-4 text-center small">
+          <span class="me-2">
+            <i class="fas fa-circle text-primary"></i> Route A
+          </span>
+          <span class="me-2">
+            <i class="fas fa-circle text-success"></i> Route B
+          </span>
+          <span class="me-2">
+            <i class="fas fa-circle text-info"></i> Route C
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered" id="recentActivityTable" width="100%" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Activity</th>
+            <th>User</th>
+            <th>Details</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>10:30 AM</td>
+            <td>New Complaint</td>
+            <td>John Doe</td>
+            <td>Bus #12 is late</td>
+            <td><span class="badge bg-warning">Pending</span></td>
+          </tr>
+          <tr>
+            <td>9:15 AM</td>
+            <td>Bus Maintenance</td>
+            <td>Admin</td>
+            <td>Bus #5 serviced</td>
+            <td><span class="badge bg-success">Completed</span></td>
+          </tr>
+          <tr>
+            <td>Yesterday</td>
+            <td>New Student</td>
+            <td>System</td>
+            <td>Jane Smith registered</td>
+            <td><span class="badge bg-info">New</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Analysis -->
+<div class="row
+">
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Feedback Ratings</h6>
+      </div>
+      <div class="card-body">
+        <div class="chart-bar">
+          <canvas id="feedbackRatingsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Complaint Categories</h6>
+      </div>
+      <div class="card-body">
+        <div class="chart-pie pt-4 pb-2">
+          <canvas id="complaintCategoriesChart"></canvas>
+        </div>
+        <div class="mt-4 text-center small">
+          <span class="me-2">
+            <i class="fas fa-circle text-primary"></i> Late Arrival
+          </span>
+          <span class="me-2">
+            <i class="fas fa-circle text-success"></i> Cleanliness
+          </span>
+          <span class="me-2">
+            <i class="fas fa-circle text-info"></i> Driver Behavior
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Bus Utilization Chart
+var ctx = document.getElementById('busUtilizationChart').getContext('2d');
+var busUtilizationChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    datasets: [{
+      label: 'Average Occupancy %',
+      data: [65, 59, 80, 81, 76, 75, 80, 82, 85, 87, 84, 89],
+      backgroundColor: 'rgba(78, 115, 223, 0.05)',
+      borderColor: 'rgba(78, 115, 223, 1)',
+      pointRadius: 3,
+      pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+      pointBorderColor: 'rgba(78, 115, 223, 1)',
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+      pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      tension: 0.3
+    }]
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: function(value) {
+            return value + '%';
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        backgroundColor: 'rgb(255,255,255)',
+        bodyColor: '#858796',
+        titleMarginBottom: 10,
+        titleFontColor: '#6e707e',
+        titleFontSize: 14,
+        borderColor: '#dddfeb',
+        borderWidth: 1,
+        xPadding: 15,
+        yPadding: 15,
+        displayColors: false,
+        intersect: false,
+        mode: 'index',
+        caretPadding: 10,
+        callbacks: {
+          label: function(context) {
+            var label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += context.parsed.y + '%';
+            }
+            return label;
+          }
+        }
+      }
+    }
+  }
+});
+
+// Route Performance Chart
+var ctx2 = document.getElementById('routePerformanceChart');
+var routePerformanceChart = new Chart(ctx2, {
+  type: 'doughnut',
+  data: {
+    labels: ['Route A', 'Route B', 'Route C', 'Route D', 'Others'],
+    datasets: [{
+      data: [30, 25, 20, 15, 10],
+      backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+      hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+      hoverBorderColor: 'rgba(234, 236, 244, 1)',
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    tooltips: {
+      backgroundColor: 'rgb(255,255,255)',
+      bodyFontColor: '#858796',
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      caretPadding: 10,
+    },
+    legend: {
+      display: false
+    },
+    cutout: '80%',
+  },
+});
+
+// Feedback Ratings Chart
+var ctx3 = document.getElementById('feedbackRatingsChart');
+var feedbackRatingsChart = new Chart(ctx3, {
+  type: 'bar',
+  data: {
+    labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
+    datasets: [{
+      label: 'Number of Ratings',
+      backgroundColor: '#4e73df',
+      hoverBackgroundColor: '#2e59d9',
+      borderColor: '#4e73df',
+      data: [42, 35, 15, 5, 3],
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      }
+    }
+  }
+});
+
+// Complaint Categories Chart
+var ctx4 = document.getElementById('complaintCategoriesChart');
+var complaintCategoriesChart = new Chart(ctx4, {
+  type: 'doughnut',
+  data: {
+    labels: ['Late Arrival', 'Cleanliness', 'Driver Behavior', 'Overcrowding', 'Other'],
+    datasets: [{
+      data: [35, 25, 20, 15, 5],
+      backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+      hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+      hoverBorderColor: 'rgba(234, 236, 244, 1)',
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    tooltips: {
+      backgroundColor: 'rgb(255,255,255)',
+      bodyFontColor: '#858796',
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      caretPadding: 10,
+    },
+    legend: {
+      display: false
+    },
+    cutout: '70%',
+  },
+});
+
+// Initialize DataTable for Recent Activity
+$(document).ready(function() {
+  $('#recentActivityTable').DataTable({
+    "order": [[0, "desc"]],
+    "pageLength": 5,
+    "lengthChange": false,
+    "searching": false,
+    "info": false
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

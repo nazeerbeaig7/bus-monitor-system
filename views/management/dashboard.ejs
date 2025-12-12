@@ -1,0 +1,641 @@
+<div class="container animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-danger">
+        <div class="card-body">
+          <h2 class="card-title">
+            <i class="fas fa-tachometer-alt text-danger me-2"></i> Management Dashboard
+          </h2>
+          <p class="lead">Welcome, <% if (user && user.name) { %><%= user.name %><% } else { %>Admin<% } %> 👋</p>
+          <p class="text-muted">Manage your fleet, students, and reports</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+      <div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-1s">
+        <div class="card-body text-center">
+          <div class="icon-wrapper mb-3">
+            <i class="fas fa-bus fa-3x text-danger"></i>
+          </div>
+          <h5 class="card-title">Buses</h5>
+          <p class="display-4 fw-bold text-danger">
+            <% if (typeof buses !== 'undefined') { %>
+              <%= buses.length %>
+            <% } else { %>
+              0
+            <% } %>
+          </p>
+          <p class="card-text">Active buses in fleet</p>
+          <a href="/management/buses" class="btn btn-danger btn-sm">
+            <i class="fas fa-cog me-1"></i> Manage Buses
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+      <div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-2s">
+        <div class="card-body text-center">
+          <div class="icon-wrapper mb-3">
+            <i class="fas fa-user-graduate fa-3x text-primary"></i>
+          </div>
+          <h5 class="card-title">Students</h5>
+          <p class="display-4 fw-bold text-primary">
+            <% if (typeof studentCount !== 'undefined') { %>
+              <%= studentCount %>
+            <% } else { %>
+              0
+            <% } %>
+          </p>
+          <p class="card-text">Registered students</p>
+          <a href="/management/students" class="btn btn-primary btn-sm">
+            <i class="fas fa-users me-1"></i> Manage Students
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+      <div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-3s">
+        <div class="card-body text-center">
+          <div class="icon-wrapper mb-3">
+            <i class="fas fa-route fa-3x text-success"></i>
+          </div>
+          <h5 class="card-title">Routes</h5>
+          <p class="display-4 fw-bold text-success">
+            <% if (typeof routes !== 'undefined') { %>
+              <%= routes.length %>
+            <% } else { %>
+              0
+            <% } %>
+          </p>
+          <p class="card-text">Active routes</p>
+          <a href="/management/routes" class="btn btn-success btn-sm">
+            <i class="fas fa-map me-1"></i> Manage Routes
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-4s">
+        <div class="card-body text-center">
+          <div class="icon-wrapper mb-3">
+            <i class="fas fa-chart-line fa-3x text-info"></i>
+          </div>
+          <h5 class="card-title">Reports</h5>
+          <p class="display-4 fw-bold text-info">
+            <% if (typeof reports !== 'undefined') { %>
+              <%= reports.length %>
+            <% } else { %>
+              0
+            <% } %>
+          </p>
+          <p class="card-text">Available reports</p>
+          <a href="/management/reports" class="btn btn-info btn-sm text-white">
+            <i class="fas fa-file-alt me-1"></i> View Reports
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-lg-8 mb-4 mb-lg-0">
+      <div class="card shadow-sm animate__animated animate__fadeIn animate__delay-5s">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-bus-alt me-2 text-danger"></i> Active Buses
+          </h5>
+          <a href="/management/buses/add" class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-plus-circle me-1"></i> Add Bus
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Bus ID</th>
+                  <th>Driver</th>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+                  <% buses.slice(0, 4).forEach(bus => { %>
+                    <tr>
+                      <td><%= bus.busId %></td>
+                      <td><%= bus.driverName %></td>
+                      <td><%= bus.route %></td>
+                      <td>
+                        <% if (bus.isActive) { %>
+                          <span class="badge bg-success">Active</span>
+                        <% } else { %>
+                          <span class="badge bg-warning text-dark">Inactive</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/management/buses/edit/<%= bus._id %>" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        <a href="/management/buses/view/<%= bus._id %>" class="btn btn-sm btn-info"><i class="fas fa-map-marker-alt"></i></a>
+                        <form method="POST" action="/management/buses/delete/<%= bus._id %>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this bus?');">
+                          <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center">No buses found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <a href="/management/buses" class="btn btn-sm btn-outline-primary">View All Buses</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4 animate__animated animate__fadeIn animate__delay-5s">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-pie me-2 text-primary"></i> Driver Performance
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+            <ul class="list-group list-group-flush">
+              <% buses.slice(0, 4).forEach(bus => { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="badge bg-primary me-2"><%= bus.busId %></span>
+                    <%= bus.driverName %>
+                  </div>
+                  <div>
+                    <div class="stars">
+                      <% 
+                        // Calculate average rating from feedback
+                        let avgRating = 0;
+                        if (bus.feedback && bus.feedback.length > 0) {
+                          const sum = bus.feedback.reduce((acc, item) => acc + item.rating, 0);
+                          avgRating = sum / bus.feedback.length;
+                        }
+                        // Round to nearest half
+                        avgRating = Math.round(avgRating * 2) / 2;
+                      %>
+                      <% for (let i = 1; i <= 5; i++) { %>
+                        <% if (i <= Math.floor(avgRating)) { %>
+                          <i class="fas fa-star text-warning"></i>
+                        <% } else if (i - 0.5 === Math.floor(avgRating)) { %>
+                          <i class="fas fa-star-half-alt text-warning"></i>
+                        <% } else { %>
+                          <i class="far fa-star text-warning"></i>
+                        <% } %>
+                      <% } %>
+                    </div>
+                    <small class="text-muted"><%= avgRating.toFixed(1) %>/5</small>
+                  </div>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <div class="text-center py-4">
+              <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+              <p>No driver data available</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm animate__animated animate__fadeIn animate__delay-6s">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-bell me-2 text-danger"></i> System Alerts
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <% if (typeof buses !== 'undefined' && buses.some(b => b.nextMaintenanceDate && new Date(b.nextMaintenanceDate) <= new Date())) { %>
+              <% buses.filter(b => b.nextMaintenanceDate && new Date(b.nextMaintenanceDate) <= new Date()).slice(0, 3).forEach(bus => { %>
+                <a href="/management/buses/view/<%= bus._id %>" class="list-group-item list-group-item-action">
+                  <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">Bus <%= bus.busId %> Maintenance Required</h6>
+                    <small class="text-muted">Due <%= new Date(bus.nextMaintenanceDate).toLocaleDateString() %></small>
+                  </div>
+                  <p class="mb-1 small">Scheduled maintenance due for Bus <%= bus.busId %>.</p>
+                </a>
+              <% }); %>
+            <% } %>
+            
+            <% if (typeof complaints !== 'undefined' && complaints.length > 0) { %>
+              <a href="/management/feedback" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">Student Complaints</h6>
+                  <small class="text-muted"><%= complaints.length %> pending</small>
+                </div>
+                <p class="mb-1 small">There are <%= complaints.length %> unresolved student complaints.</p>
+              </a>
+            <% } %>
+            
+            <% if (typeof buses !== 'undefined' && buses.length === 0) { %>
+              <a href="/management/buses/add" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">Add Your First Bus</h6>
+                  <small class="text-muted">Now</small>
+                </div>
+                <p class="mb-1 small">Get started by adding your first bus to the system.</p>
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Live Bus Map Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm animate__animated animate__fadeIn">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-map-marked-alt me-2 text-primary"></i> Live Bus Tracking
+          </h5>
+          <div>
+            <button class="btn btn-sm btn-outline-primary" id="refreshMapBtn">
+              <i class="fas fa-sync-alt me-1"></i> Refresh Map
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+            <div id="adminMap" style="height: 500px; width: 100%;"></div>
+          <% } else { %>
+            <div class="text-center py-5">
+              <i class="fas fa-map-marked-alt fa-4x text-muted mb-3"></i>
+              <h5>No bus data available</h5>
+              <p class="text-muted">Bus location data will appear on this map when buses are active</p>
+            </div>
+          <% } %>
+        </div>
+        <div class="card-footer">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center">
+                <span class="badge rounded-pill bg-success p-2 me-2"><i class="fas fa-bus"></i></span>
+                <span class="small">Active Bus</span>
+                
+                <span class="badge rounded-pill bg-warning text-dark p-2 me-2 ms-3"><i class="fas fa-bus"></i></span>
+                <span class="small">Maintenance</span>
+                
+                <span class="badge rounded-pill bg-danger p-2 me-2 ms-3"><i class="fas fa-bus"></i></span>
+                <span class="small">Inactive</span>
+              </div>
+            </div>
+            <div class="col-md-6 text-end">
+              <span class="text-muted small">Map data auto-refreshes every 5 minutes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Student Feedback Section -->
+  <div class="row mb-4">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="card shadow-sm animate__animated animate__fadeIn">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-comments me-2 text-success"></i> Positive Feedback
+            <span class="badge bg-success rounded-pill ms-2">
+              <% if (typeof feedback !== 'undefined') { %>
+                <%= feedback.length %>
+              <% } else { %>
+                0
+              <% } %>
+            </span>
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <% if (typeof feedback !== 'undefined' && feedback.length > 0) { %>
+            <div class="list-group list-group-flush feedback-list">
+              <% feedback.slice(0, 5).forEach(item => { %>
+                <div class="list-group-item">
+                  <div class="d-flex w-100 justify-content-between align-items-start">
+                    <h6 class="mb-1">
+                      <%= item.studentName || 'Anonymous Student' %>
+                      <small class="text-muted ms-2">→ Bus <%= item.bus.busId %> (<%= item.bus.driverName %>)</small>
+                    </h6>
+                    <div>
+                      <% for (let i = 1; i <= 5; i++) { %>
+                        <i class="fas fa-star <%= i <= item.rating ? 'text-warning' : 'text-muted' %>"></i>
+                      <% } %>
+                    </div>
+                  </div>
+                  <p class="mb-1 mt-2"><%= item.message %></p>
+                  <small class="text-muted"><%= new Date(item.timestamp).toLocaleString() %></small>
+                </div>
+              <% }); %>
+            </div>
+            <% if (feedback.length > 5) { %>
+              <div class="card-footer text-center">
+                <a href="/management/feedback" class="btn btn-sm btn-outline-success">
+                  View All Feedback (<%= feedback.length %>)
+                </a>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="text-center py-5">
+              <i class="far fa-smile fa-4x text-muted mb-3"></i>
+              <h5>No feedback yet</h5>
+              <p class="text-muted">Positive student feedback will appear here</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-6">
+      <div class="card shadow-sm animate__animated animate__fadeIn">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-exclamation-circle me-2 text-danger"></i> Student Complaints
+            <span class="badge bg-danger rounded-pill ms-2">
+              <% if (typeof complaints !== 'undefined') { %>
+                <%= complaints.length %>
+              <% } else { %>
+                0
+              <% } %>
+            </span>
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <% if (typeof complaints !== 'undefined' && complaints.length > 0) { %>
+            <div class="list-group list-group-flush complaints-list">
+              <% complaints.slice(0, 5).forEach(item => { %>
+                <div class="list-group-item">
+                  <div class="d-flex w-100 justify-content-between align-items-start">
+                    <h6 class="mb-1">
+                      <span class="badge rounded-pill bg-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                      </span>
+                      <%= item.studentName || 'Anonymous Student' %>
+                      <small class="text-muted ms-2">→ Bus <%= item.bus.busId %> (<%= item.bus.driverName %>)</small>
+                    </h6>
+                    <div>
+                      <% for (let i = 1; i <= 5; i++) { %>
+                        <i class="fas fa-star <%= i <= item.rating ? 'text-warning' : 'text-muted' %>"></i>
+                      <% } %>
+                    </div>
+                  </div>
+                  <p class="mb-1 mt-2"><%= item.message %></p>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted"><%= new Date(item.timestamp).toLocaleString() %></small>
+                    <button class="btn btn-sm btn-outline-secondary">
+                      <i class="fas fa-check-circle me-1"></i> Mark as Resolved
+                    </button>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+            <% if (complaints.length > 5) { %>
+              <div class="card-footer text-center">
+                <a href="/management/complaints" class="btn btn-sm btn-outline-danger">
+                  View All Complaints (<%= complaints.length %>)
+                </a>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="text-center py-5">
+              <i class="far fa-thumbs-up fa-4x text-muted mb-3"></i>
+              <h5>No complaints</h5>
+              <p class="text-muted">No student complaints received</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Leaflet CSS and JS after container -->
+<% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    const map = L.map('adminMap').setView([20.5937, 78.9629], 5); // Default view is India
+    
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Store markers and routes for refreshing
+    let busMarkers = [];
+    let routeLines = [];
+    
+    // Function to add markers and routes to the map
+    function renderBuses() {
+      // Clear existing markers and routes
+      busMarkers.forEach(marker => map.removeLayer(marker));
+      routeLines.forEach(line => map.removeLayer(line));
+      busMarkers = [];
+      routeLines = [];
+      
+      // Track valid coordinates for map bounds
+      const validCoordinates = [];
+      
+      // Bus data from server
+      const buses = <%- JSON.stringify(buses) %>;
+      
+      // Define a set of icon colors for different buses
+      const busIconColors = [
+        'red', 'blue', 'green', 'orange', 'yellow', 'violet', 'pink',
+        'black', 'gray', 'gold'
+      ];
+      
+      // Process each bus
+      buses.forEach((bus, index) => {
+        // Determine icon color based on bus index and status
+        let iconColor;
+        if (!bus.isActive) {
+          iconColor = 'red'; // Inactive buses are red
+        } else {
+          // Cycle through colors for active buses
+          iconColor = busIconColors[index % busIconColors.length];
+        }
+        
+        // Create custom icon for this bus
+        const busIcon = L.icon({
+          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        
+        // Add current location marker if coordinates exist
+        if (bus.currentCoordinates && bus.currentCoordinates.lat && bus.currentCoordinates.lon) {
+          const marker = L.marker(
+            [bus.currentCoordinates.lat, bus.currentCoordinates.lon], 
+            {icon: busIcon}
+          ).addTo(map);
+          
+          marker.bindPopup(`
+            <strong>${bus.busName || 'Bus'} (${bus.busId})</strong><br>
+            Driver: ${bus.driverName}<br>
+            Route: ${bus.route}<br>
+            Status: ${bus.isActive ? 'Active' : 'Inactive'}<br>
+            Last Updated: ${bus.currentCoordinates.lastUpdated 
+              ? new Date(bus.currentCoordinates.lastUpdated).toLocaleString() 
+              : 'N/A'}
+          `);
+          
+          busMarkers.push(marker);
+          validCoordinates.push([bus.currentCoordinates.lat, bus.currentCoordinates.lon]);
+        }
+        
+        // Add boarding & destination markers and route line if both exist
+        if (bus.boardingPoint && bus.boardingPoint.lat && bus.boardingPoint.lon && 
+            bus.destinationPoint && bus.destinationPoint.lat && bus.destinationPoint.lon) {
+            
+          // Boarding point marker
+          const boardingIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [18, 30], // Slightly smaller
+            iconAnchor: [9, 30],
+            popupAnchor: [1, -30],
+            shadowSize: [30, 30]
+          });
+          
+          const boardingMarker = L.marker(
+            [bus.boardingPoint.lat, bus.boardingPoint.lon], 
+            {icon: boardingIcon}
+          ).addTo(map);
+          
+          boardingMarker.bindPopup(`
+            <strong>Boarding Point: ${bus.boardingPoint.name || 'N/A'}</strong><br>
+            Bus: ${bus.busName || 'Bus'} (${bus.busId})<br>
+            Driver: ${bus.driverName}
+          `);
+          
+          busMarkers.push(boardingMarker);
+          validCoordinates.push([bus.boardingPoint.lat, bus.boardingPoint.lon]);
+          
+          // Destination marker
+          const destinationIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [18, 30], // Slightly smaller
+            iconAnchor: [9, 30],
+            popupAnchor: [1, -30],
+            shadowSize: [30, 30]
+          });
+          
+          const destinationMarker = L.marker(
+            [bus.destinationPoint.lat, bus.destinationPoint.lon], 
+            {icon: destinationIcon}
+          ).addTo(map);
+          
+          destinationMarker.bindPopup(`
+            <strong>Destination: ${bus.destinationPoint.name || 'N/A'}</strong><br>
+            Bus: ${bus.busName || 'Bus'} (${bus.busId})<br>
+            Driver: ${bus.driverName}
+          `);
+          
+          busMarkers.push(destinationMarker);
+          validCoordinates.push([bus.destinationPoint.lat, bus.destinationPoint.lon]);
+          
+          // Add dotted line between boarding and destination
+          const routeLine = L.polyline([
+            [bus.boardingPoint.lat, bus.boardingPoint.lon],
+            [bus.destinationPoint.lat, bus.destinationPoint.lon]
+          ], {
+            color: iconColor,
+            weight: 2,
+            opacity: 0.7,
+            dashArray: '5, 10',
+            lineJoin: 'round'
+          }).addTo(map);
+          
+          routeLines.push(routeLine);
+          
+          // Add current location to route if available
+          if (bus.currentCoordinates && bus.currentCoordinates.lat && bus.currentCoordinates.lon) {
+            // Line from boarding to current
+            const b2cLine = L.polyline([
+              [bus.boardingPoint.lat, bus.boardingPoint.lon],
+              [bus.currentCoordinates.lat, bus.currentCoordinates.lon]
+            ], {
+              color: 'green',
+              weight: 3,
+              opacity: 0.8,
+              lineJoin: 'round'
+            }).addTo(map);
+            
+            // Line from current to destination (dotted)
+            const c2dLine = L.polyline([
+              [bus.currentCoordinates.lat, bus.currentCoordinates.lon],
+              [bus.destinationPoint.lat, bus.destinationPoint.lon]
+            ], {
+              color: 'red',
+              weight: 2,
+              opacity: 0.7,
+              dashArray: '5, 10',
+              lineJoin: 'round'
+            }).addTo(map);
+            
+            routeLines.push(b2cLine);
+            routeLines.push(c2dLine);
+            
+            // Remove the direct route line (replaced with b2c + c2d)
+            map.removeLayer(routeLine);
+          }
+        }
+      });
+      
+      // Adjust map view to include all markers
+      if (validCoordinates.length > 0) {
+        const bounds = L.latLngBounds(validCoordinates);
+        map.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }
+    
+    // Initial render
+    renderBuses();
+    
+    // Refresh when button clicked
+    document.getElementById('refreshMapBtn').addEventListener('click', function() {
+      // In a real app, you'd fetch fresh data from the server here
+      // For demo, just rerender the existing data
+      renderBuses();
+      this.innerHTML = '<i class="fas fa-check-circle me-1"></i> Map Refreshed';
+      setTimeout(() => {
+        this.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Map';
+      }, 2000);
+    });
+    
+    // Auto-refresh every 5 minutes
+    setInterval(renderBuses, 5 * 60 * 1000);
+  });
+</script>
+<% } %> 

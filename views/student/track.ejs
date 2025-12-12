@@ -1,0 +1,383 @@
+<%- include('../partials/header.ejs') %>
+<%- include('../partials/navbar.ejs') %>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-danger">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0">
+              <i class="fas fa-map-marker-alt text-danger me-2"></i> Bus Tracker
+            </h2>
+            <a href="/student/dashboard" class="btn btn-outline-danger">
+              <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (locals.error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
+  <% } %>
+  
+  <% if (locals.success_msg) { %>
+    <div class="alert alert-success"><%= success_msg %></div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-map me-2 text-danger"></i> Live Location
+            <% if (selectedBus) { %>
+              <span class="text-muted">| <%= selectedBus.busName %> (#<%= selectedBus.busId %>)</span>
+            <% } %>
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <% if (selectedBus) { %>
+            <div id="busMap" style="height: 500px; width: 100%;"></div>
+          <% } else { %>
+            <div class="text-center py-5">
+              <i class="fas fa-map-marked-alt fa-4x text-muted mb-3"></i>
+              <h5>Select a bus to track</h5>
+              <p class="text-muted">Please select a bus from the list to see its real-time location</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-bus me-2 text-primary"></i> Select Bus
+          </h5>
+        </div>
+        <div class="card-body">
+          <select id="busSelector" class="form-select mb-3">
+            <option value="">Choose a bus to track</option>
+            <% if (typeof buses !== 'undefined' && buses.length > 0) { %>
+              <% buses.forEach(bus => { %>
+                <option value="<%= bus.busId %>" <%= selectedBus && selectedBus.busId === bus.busId ? 'selected' : '' %>>
+                  <%= bus.busName %> (#<%= bus.busId %>) - <%= bus.route %>
+                </option>
+              <% }); %>
+            <% } %>
+          </select>
+          <button id="trackSelectedBus" class="btn btn-primary w-100">
+            <i class="fas fa-search-location me-1"></i> Track This Bus
+          </button>
+        </div>
+      </div>
+
+      <% if (selectedBus) { %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="fas fa-info-circle me-2 text-info"></i> Bus Details
+            </h5>
+          </div>
+          <div class="card-body">
+            <p><strong>Bus Name:</strong> <%= selectedBus.busName %></p>
+            <p><strong>Driver:</strong> <%= selectedBus.driverName %></p>
+            <p><strong>Route:</strong> <%= selectedBus.route %></p>
+            <p>
+              <strong>Current Location:</strong> 
+              <span id="currentLocationText"><%= selectedBus.currentLocation || 'Not available' %></span>
+            </p>
+            <p>
+              <strong>Last Updated:</strong> 
+              <span id="lastUpdatedText">
+                <%= selectedBus.currentCoordinates && selectedBus.currentCoordinates.lastUpdated ? 
+                  new Date(selectedBus.currentCoordinates.lastUpdated).toLocaleString() : 
+                  'Not available' %>
+              </span>
+            </p>
+            <div class="progress mb-2">
+              <div id="busProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%;" 
+                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+            <p class="small text-muted mb-0">Progress from boarding to destination</p>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="fas fa-star me-2 text-warning"></i> Rate Your Experience
+            </h5>
+          </div>
+          <div class="card-body">
+            <form action="/student/feedback/<%= selectedBus.busId %>" method="POST">
+              <div class="mb-3">
+                <label class="form-label">Rating</label>
+                <div class="rating">
+                  <div class="d-flex justify-content-between mb-2">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rating" value="<%= i %>" id="rating<%= i %>">
+                        <label class="form-check-label" for="rating<%= i %>">
+                          <i class="fas fa-star text-warning"></i>
+                        </label>
+                      </div>
+                    <% } %>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <small>Poor</small>
+                    <small>Excellent</small>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="message" class="form-label">Comments (optional)</label>
+                <textarea class="form-control" id="message" name="message" rows="3" placeholder="Share your experience..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-warning w-100">
+                <i class="fas fa-paper-plane me-1"></i> Submit Feedback
+              </button>
+            </form>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (selectedBus) { %>
+<!-- Add Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    const map = L.map('busMap').setView([20.5937, 78.9629], 5); // Default view is India
+    
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Store markers and routes for refreshing
+    let busMarker;
+    let boardingMarker;
+    let destinationMarker;
+    let routeLine;
+    let progressLine;
+    
+    // Bus data from server
+    const busId = '<%= selectedBus.busId %>';
+    
+    // Function to update bus location on the map
+    function updateBusLocation() {
+      fetch(`/student/api/bus-location/${busId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Clear existing markers and routes
+            if (busMarker) map.removeLayer(busMarker);
+            if (boardingMarker) map.removeLayer(boardingMarker);
+            if (destinationMarker) map.removeLayer(destinationMarker);
+            if (routeLine) map.removeLayer(routeLine);
+            if (progressLine) map.removeLayer(progressLine);
+            
+            // Update location text
+            document.getElementById('currentLocationText').textContent = data.currentLocation || 'Not available';
+            document.getElementById('lastUpdatedText').textContent = data.lastUpdated ? 
+              new Date(data.lastUpdated).toLocaleString() : 'Not available';
+            
+            // Track valid coordinates for map bounds
+            const validCoordinates = [];
+            
+            // Create bus icon
+            const busIcon = L.icon({
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41]
+            });
+            
+            // Add current location marker if coordinates exist
+            if (data.coordinates && data.coordinates.lat && data.coordinates.lon) {
+              busMarker = L.marker(
+                [data.coordinates.lat, data.coordinates.lon], 
+                {icon: busIcon}
+              ).addTo(map);
+              
+              busMarker.bindPopup(`
+                <strong>${data.busName} (${data.busId})</strong><br>
+                Current Location: ${data.currentLocation || 'Not specified'}<br>
+                Last Updated: ${data.lastUpdated ? 
+                  new Date(data.lastUpdated).toLocaleString() : 'N/A'}
+              `);
+              
+              validCoordinates.push([data.coordinates.lat, data.coordinates.lon]);
+            }
+            
+            // Add boarding & destination markers and route line if both exist
+            if (data.boardingPoint && data.boardingPoint.lat && data.boardingPoint.lon && 
+                data.destinationPoint && data.destinationPoint.lat && data.destinationPoint.lon) {
+                
+              // Boarding point marker
+              const boardingIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+              });
+              
+              boardingMarker = L.marker(
+                [data.boardingPoint.lat, data.boardingPoint.lon], 
+                {icon: boardingIcon}
+              ).addTo(map);
+              
+              boardingMarker.bindPopup(`
+                <strong>Boarding Point: ${data.boardingPoint.name || 'N/A'}</strong><br>
+                Bus: ${data.busName} (${data.busId})
+              `);
+              
+              validCoordinates.push([data.boardingPoint.lat, data.boardingPoint.lon]);
+              
+              // Destination marker
+              const destinationIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+              });
+              
+              destinationMarker = L.marker(
+                [data.destinationPoint.lat, data.destinationPoint.lon], 
+                {icon: destinationIcon}
+              ).addTo(map);
+              
+              destinationMarker.bindPopup(`
+                <strong>Destination: ${data.destinationPoint.name || 'N/A'}</strong><br>
+                Bus: ${data.busName} (${data.busId})
+              `);
+              
+              validCoordinates.push([data.destinationPoint.lat, data.destinationPoint.lon]);
+              
+              // Add dotted line between boarding and destination (full route)
+              routeLine = L.polyline([
+                [data.boardingPoint.lat, data.boardingPoint.lon],
+                [data.destinationPoint.lat, data.destinationPoint.lon]
+              ], {
+                color: 'gray',
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '5, 10',
+                lineJoin: 'round'
+              }).addTo(map);
+              
+              // Add current location to route if available
+              if (data.coordinates && data.coordinates.lat && data.coordinates.lon) {
+                // Line from boarding to current (progress line)
+                progressLine = L.polyline([
+                  [data.boardingPoint.lat, data.boardingPoint.lon],
+                  [data.coordinates.lat, data.coordinates.lon]
+                ], {
+                  color: 'green',
+                  weight: 5,
+                  opacity: 0.8,
+                  lineJoin: 'round'
+                }).addTo(map);
+                
+                // Calculate progress percentage
+                const totalDistance = calculateDistance(
+                  data.boardingPoint.lat, data.boardingPoint.lon,
+                  data.destinationPoint.lat, data.destinationPoint.lon
+                );
+                
+                const traveledDistance = calculateDistance(
+                  data.boardingPoint.lat, data.boardingPoint.lon,
+                  data.coordinates.lat, data.coordinates.lon
+                );
+                
+                // Calculate percentage and update progress bar
+                let progressPercentage = Math.round((traveledDistance / totalDistance) * 100);
+                if (progressPercentage > 100) progressPercentage = 100;
+                
+                const progressBar = document.getElementById('busProgress');
+                progressBar.style.width = `${progressPercentage}%`;
+                progressBar.setAttribute('aria-valuenow', progressPercentage);
+                progressBar.textContent = `${progressPercentage}%`;
+              }
+            }
+            
+            // Adjust map view to include all markers
+            if (validCoordinates.length > 0) {
+              const bounds = L.latLngBounds(validCoordinates);
+              map.fitBounds(bounds, { padding: [50, 50] });
+            }
+          } else {
+            console.error('Error fetching bus location:', data.message);
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+        });
+    }
+    
+    // Helper function to calculate distance between two coordinates
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Radius of the earth in km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      const distance = R * c; // Distance in km
+      return distance;
+    }
+    
+    function deg2rad(deg) {
+      return deg * (Math.PI/180);
+    }
+    
+    // Initial update
+    updateBusLocation();
+    
+    // Refresh location every 30 seconds
+    setInterval(updateBusLocation, 30000);
+  });
+</script>
+<% } %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Bus selector functionality
+    const busSelector = document.getElementById('busSelector');
+    const trackButton = document.getElementById('trackSelectedBus');
+    
+    trackButton.addEventListener('click', function() {
+      const selectedBusId = busSelector.value;
+      if (selectedBusId) {
+        window.location.href = `/student/track/${selectedBusId}`;
+      } else {
+        alert('Please select a bus to track');
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %> 
