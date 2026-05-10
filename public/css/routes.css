@@ -1,0 +1,326 @@
+/* Routes Management Styles */
+
+/* Map Container */
+#map {
+    border-radius: 0.35rem;
+    border: 1px solid #e3e6f0;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.stop-marker {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #4e73df;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
+
+.stop-marker-inner {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #4e73df;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+.stop-marker i {
+    font-size: 12px;
+}
+
+/* First stop marker */
+.first-stop {
+    background-color: #1cc88a;
+}
+
+.first-stop .stop-marker-inner {
+    background-color: #1cc88a;
+}
+
+/* Last stop marker */
+.last-stop {
+    background-color: #e74a3b;
+}
+
+.last-stop .stop-marker-inner {
+    background-color: #e74a3b;
+}
+
+/* Inactive stop marker */
+.inactive-stop .stop-marker-inner {
+    background-color: #6c757d;
+    opacity: 0.7;
+}
+
+/* Stops List */
+#stopsList {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#stopsList .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 0.75rem 1.25rem;
+    cursor: move;
+}
+
+#stopsList .list-group-item:first-child {
+    border-top: none;
+}
+
+#stopsList .list-group-item:last-child {
+    border-bottom: none;
+}
+
+#stopsList .badge {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Route Summary Card */
+.route-summary-card {
+    border-left: 0.25rem solid #4e73df;
+}
+
+.route-summary-card .card-body {
+    padding: 1rem;
+}
+
+/* Route Table */
+#routesTable th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    color: #5a5c69;
+    border-top: none;
+    padding: 0.75rem 1rem;
+}
+
+#routesTable td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+#routesTable tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d3e2;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #b7b9cc;
+}
+
+/* Leaflet Popup Customization */
+.leaflet-popup-content {
+    margin: 0.75rem;
+    min-width: 200px;
+}
+
+.leaflet-popup-content h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.leaflet-popup-content p {
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.leaflet-popup-content .btn-group {
+    margin-top: 0.5rem;
+}
+
+.leaflet-popup-content .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    #map {
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+    
+    #stopsList {
+        max-height: 300px;
+    }
+}
+
+/* Animation for route line */
+@keyframes dash {
+    to {
+        stroke-dashoffset: -1000;
+    }
+}
+
+/* Custom checkbox for route status */
+.form-switch .form-check-input {
+    width: 2.5em;
+    margin-left: -2.8em;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%28(255, 255, 255, 0.25)'/%3e%3c/svg%3e");
+    background-position: left center;
+    border-radius: 2em;
+    transition: background-position 0.15s ease-in-out;
+    cursor: pointer;
+}
+
+.form-switch .form-check-input:checked {
+    background-position: right center;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* Loading spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0.25rem solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #4e73df;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+/* Sortable handle for stops */n.sortable-ghost {
+    opacity: 0.5;
+    background: #f8f9fc;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    background: white;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.2);
+    z-index: 9999;
+}
+
+/* Custom file input */
+.custom-file-upload {
+    border: 1px dashed #d1d3e2;
+    border-radius: 0.35rem;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.custom-file-upload:hover {
+    border-color: #b7b9cc;
+    background-color: #f8f9fc;
+}
+
+/* Badge variants */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+}
+
+/* Toast notifications */n.toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1100;
+    min-width: 250px;
+}
+
+/* Responsive table */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom buttons */
+.btn-icon {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Route color indicator */
+.route-color-indicator {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.25rem;
+    display: inline-block;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Drag handle for stops */
+.drag-handle {
+    cursor: move;
+    opacity: 0.5;
+    margin-right: 0.5rem;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+/* Print styles */
+@media print {
+    .no-print, .no-print * {
+        display: none !important;
+    }
+    
+    body {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+}

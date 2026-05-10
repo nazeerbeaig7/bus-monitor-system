@@ -3,17 +3,28 @@ const router = express.Router();
 const { ensureAuthenticated, ensureDriver } = require('../config/auth');
 const Bus = require('../models/Bus');
 const Feedback = require('../models/Feedback');
+const trackingRoutes = require('./tracking');
+
+// Mount tracking routes
+router.use(trackingRoutes);
 
 // Driver Dashboard
 router.get('/dashboard', ensureDriver, async (req, res) => {
   try {
-    // Fetch full bus data for the dashboard
-    const bus = await Bus.findById(req.session.user.id);
+    // Fetch full bus data for the dashboard with tracking info
+    const bus = await Bus.findById(req.session.user.id, 
+      'busName busNumber plateNumber driverName route currentLocation tracking');
+    
+    // Format tracking status
+    const trackingStatus = bus.tracking.isActive 
+      ? `<span class="badge bg-success">Active</span> (${new Date(bus.tracking.lastUpdate).toLocaleTimeString()})`
+      : '<span class="badge bg-secondary">Inactive</span>';
     
     res.render('driver/dashboard', {
       title: 'Driver Dashboard',
       user: req.session.user,
-      bus: bus
+      bus: bus,
+      trackingStatus: trackingStatus
     });
   } catch (err) {
     console.error('Error fetching bus data:', err);

@@ -1,5 +1,4 @@
 <%- include('../partials/header.ejs') %>
-<%- include('../partials/navbar.ejs') %>
 
 <div class="container mt-4 animate__animated animate__fadeIn">
   <div class="row mb-4">
@@ -152,213 +151,322 @@
 <% if (selectedBus) { %>
 <!-- Add Leaflet CSS and JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-      crossorigin="" />
-
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/mZEZx5mG5O1Y4QZg0=" 
+      crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
         crossorigin=""></script>
+<style>
+  .bus-marker, .student-marker {
+    transform-origin: center;
+    transition: transform 0.3s ease;
+  }
+  .student-marker {
+    z-index: 1000;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .leaflet-popup-content {
+    margin: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  /* Route styling */
+  .route-line {
+    stroke: #3a86ff;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    animation: dash 1s linear infinite;
+  }
+  @keyframes dash {
+    from {
+      stroke-dashoffset: 10;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the map
-    const map = L.map('busMap').setView([20.5937, 78.9629], 5); // Default view is India
+    // Initialize the map with error handling
+    let map;
+    try {
+      // Make sure the map container exists and has dimensions
+      const mapElement = document.getElementById('busMap');
+      if (!mapElement) {
+        throw new Error('Map container not found');
+      }
+      
+      // Check if map container has dimensions
+      if (mapElement.offsetWidth === 0 || mapElement.offsetHeight === 0) {
+        console.warn('Map container has no dimensions, setting default size');
+        mapElement.style.height = '500px';
+        mapElement.style.width = '100%';
+      }
+      
+      // Initialize the map focused on India
+      map = L.map('busMap', {
+        center: [20.5937, 78.9629], // Center of India
+        zoom: 5, // Initial zoom level to show all of India
+        minZoom: 4, // Prevent zooming out too far
+        maxBounds: [  // Set bounds to keep map focused on India
+          [6.75, 68.1],  // Southwest coordinates
+          [35.5, 97.4]   // Northeast coordinates
+        ],
+        zoomControl: true
+      });
+      
+      // Add OpenStreetMap tile layer with error handling
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        detectRetina: true
+      }).addTo(map);
+      
+      // Add a small delay to ensure the map container is fully rendered
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      const mapContainer = document.getElementById('busMap');
+      if (mapContainer) {
+        mapContainer.innerHTML = `
+          <div class="alert alert-danger m-3">
+            <h5>Error loading map</h5>
+            <p>${error.message}</p>
+            <button class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
+              <i class="fas fa-sync-alt me-1"></i> Reload Map
+            </button>
+          </div>
+        `;
+      }
+      return; // Stop execution if map initialization fails
+    }
     
-    // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    
-    // Store markers and routes for refreshing
-    let busMarker;
-    let boardingMarker;
-    let destinationMarker;
-    let routeLine;
-    let progressLine;
+    // Store markers and route for refreshing
+    let busMarker, studentMarker, routeLine;
     
     // Bus data from server
     const busId = '<%= selectedBus.busId %>';
     
     // Function to update bus location on the map
-    function updateBusLocation() {
-      fetch(`/student/api/bus-location/${busId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Clear existing markers and routes
-            if (busMarker) map.removeLayer(busMarker);
-            if (boardingMarker) map.removeLayer(boardingMarker);
-            if (destinationMarker) map.removeLayer(destinationMarker);
-            if (routeLine) map.removeLayer(routeLine);
-            if (progressLine) map.removeLayer(progressLine);
+    async function updateBusLocation() {
+      try {
+        const response = await fetch(`/student/api/bus-location/${busId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          // Clear existing markers and route
+          [busMarker, studentMarker, routeLine].forEach(layer => {
+            if (layer) map.removeLayer(layer);
+          });
+          
+          // Update location text
+          document.getElementById('currentLocationText').textContent = data.currentLocation || 'Not available';
+          
+          // Track valid coordinates for map bounds
+          const validCoordinates = [];
+          
+          // Create bus icon
+          const busIcon = L.divIcon({
+            html: '<i class="fas fa-bus" style="color: #dc3545; font-size: 32px;"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            className: 'bus-marker'
+          });
+          
+          // Add current location marker if coordinates exist
+          if (data.coordinates && data.coordinates.lat && data.coordinates.lon) {
+            busMarker = L.marker(
+              [data.coordinates.lat, data.coordinates.lon], 
+              {icon: busIcon}
+            ).addTo(map);
             
-            // Update location text
-            document.getElementById('currentLocationText').textContent = data.currentLocation || 'Not available';
-            document.getElementById('lastUpdatedText').textContent = data.lastUpdated ? 
-              new Date(data.lastUpdated).toLocaleString() : 'Not available';
+            busMarker.bindPopup(`
+              <strong>${data.busName} (${data.busId})</strong><br>
+              Current Location: ${data.currentLocation || 'Not specified'}<br>
+              Last Updated: ${data.lastUpdated ? 
+                new Date(data.lastUpdated).toLocaleString() : 'N/A'}
+            `);
             
-            // Track valid coordinates for map bounds
-            const validCoordinates = [];
-            
-            // Create bus icon
-            const busIcon = L.icon({
-              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-              iconSize: [25, 41],
-              iconAnchor: [12, 41],
-              popupAnchor: [1, -34],
-              shadowSize: [41, 41]
+            validCoordinates.push([data.coordinates.lat, data.coordinates.lon]);
+          }
+          
+          // Add boarding point if available
+          if (data.boardingPoint && data.boardingPoint.lat && data.boardingPoint.lon) {
+            const boardingIcon = L.divIcon({
+              html: '<i class="fas fa-map-marker-alt" style="color: #28a745; font-size: 24px;"></i>',
+              iconSize: [24, 24],
+              iconAnchor: [12, 24],
+              className: 'boarding-marker'
             });
             
-            // Add current location marker if coordinates exist
-            if (data.coordinates && data.coordinates.lat && data.coordinates.lon) {
-              busMarker = L.marker(
-                [data.coordinates.lat, data.coordinates.lon], 
-                {icon: busIcon}
-              ).addTo(map);
-              
-              busMarker.bindPopup(`
-                <strong>${data.busName} (${data.busId})</strong><br>
-                Current Location: ${data.currentLocation || 'Not specified'}<br>
-                Last Updated: ${data.lastUpdated ? 
-                  new Date(data.lastUpdated).toLocaleString() : 'N/A'}
-              `);
-              
-              validCoordinates.push([data.coordinates.lat, data.coordinates.lon]);
-            }
+            L.marker(
+              [data.boardingPoint.lat, data.boardingPoint.lon],
+              {icon: boardingIcon}
+            ).addTo(map).bindPopup('<strong>Boarding Point</strong>');
             
-            // Add boarding & destination markers and route line if both exist
-            if (data.boardingPoint && data.boardingPoint.lat && data.boardingPoint.lon && 
-                data.destinationPoint && data.destinationPoint.lat && data.destinationPoint.lon) {
-                
-              // Boarding point marker
-              const boardingIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-              });
-              
-              boardingMarker = L.marker(
-                [data.boardingPoint.lat, data.boardingPoint.lon], 
-                {icon: boardingIcon}
-              ).addTo(map);
-              
-              boardingMarker.bindPopup(`
-                <strong>Boarding Point: ${data.boardingPoint.name || 'N/A'}</strong><br>
-                Bus: ${data.busName} (${data.busId})
-              `);
-              
-              validCoordinates.push([data.boardingPoint.lat, data.boardingPoint.lon]);
-              
-              // Destination marker
-              const destinationIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-              });
-              
-              destinationMarker = L.marker(
-                [data.destinationPoint.lat, data.destinationPoint.lon], 
-                {icon: destinationIcon}
-              ).addTo(map);
-              
-              destinationMarker.bindPopup(`
-                <strong>Destination: ${data.destinationPoint.name || 'N/A'}</strong><br>
-                Bus: ${data.busName} (${data.busId})
-              `);
-              
-              validCoordinates.push([data.destinationPoint.lat, data.destinationPoint.lon]);
-              
-              // Add dotted line between boarding and destination (full route)
-              routeLine = L.polyline([
-                [data.boardingPoint.lat, data.boardingPoint.lon],
-                [data.destinationPoint.lat, data.destinationPoint.lon]
-              ], {
-                color: 'gray',
-                weight: 3,
-                opacity: 0.7,
-                dashArray: '5, 10',
-                lineJoin: 'round'
-              }).addTo(map);
-              
-              // Add current location to route if available
-              if (data.coordinates && data.coordinates.lat && data.coordinates.lon) {
-                // Line from boarding to current (progress line)
-                progressLine = L.polyline([
-                  [data.boardingPoint.lat, data.boardingPoint.lon],
-                  [data.coordinates.lat, data.coordinates.lon]
-                ], {
-                  color: 'green',
-                  weight: 5,
-                  opacity: 0.8,
-                  lineJoin: 'round'
-                }).addTo(map);
-                
-                // Calculate progress percentage
-                const totalDistance = calculateDistance(
-                  data.boardingPoint.lat, data.boardingPoint.lon,
-                  data.destinationPoint.lat, data.destinationPoint.lon
-                );
-                
-                const traveledDistance = calculateDistance(
-                  data.boardingPoint.lat, data.boardingPoint.lon,
-                  data.coordinates.lat, data.coordinates.lon
-                );
-                
-                // Calculate percentage and update progress bar
-                let progressPercentage = Math.round((traveledDistance / totalDistance) * 100);
-                if (progressPercentage > 100) progressPercentage = 100;
-                
-                const progressBar = document.getElementById('busProgress');
-                progressBar.style.width = `${progressPercentage}%`;
-                progressBar.setAttribute('aria-valuenow', progressPercentage);
-                progressBar.textContent = `${progressPercentage}%`;
-              }
-            }
-            
-            // Adjust map view to include all markers
-            if (validCoordinates.length > 0) {
-              const bounds = L.latLngBounds(validCoordinates);
-              map.fitBounds(bounds, { padding: [50, 50] });
-            }
-          } else {
-            console.error('Error fetching bus location:', data.message);
+            validCoordinates.push([data.boardingPoint.lat, data.boardingPoint.lon]);
           }
-        })
-        .catch(err => {
-          console.error('Error:', err);
-        });
+          
+          // Add destination point if available
+          if (data.destinationPoint && data.destinationPoint.lat && data.destinationPoint.lon) {
+            const destIcon = L.divIcon({
+              html: '<i class="fas fa-flag-checkered" style="color: #dc3545; font-size: 24px;"></i>',
+              iconSize: [24, 24],
+              iconAnchor: [12, 24],
+              className: 'destination-marker'
+            });
+            
+            L.marker(
+              [data.destinationPoint.lat, data.destinationPoint.lon],
+              {icon: destIcon}
+            ).addTo(map).bindPopup('<strong>Destination</strong>');
+            
+            validCoordinates.push([data.destinationPoint.lat, data.destinationPoint.lon]);
+          }
+          
+          // Draw route if we have both boarding and destination points
+          if (data.boardingPoint && data.destinationPoint) {
+            drawRoute(
+              [data.boardingPoint.lon, data.boardingPoint.lat],
+              [data.destinationPoint.lon, data.destinationPoint.lat]
+            );
+          }
+          
+          // Adjust map view to include all markers
+          if (validCoordinates.length > 0) {
+            const bounds = L.latLngBounds(validCoordinates);
+            // Add a small delay to ensure map is fully initialized
+            setTimeout(() => {
+              map.fitBounds(bounds, { 
+                padding: [50, 50],
+                maxZoom: 17 // Prevent zooming in too much
+              });
+            }, 100);
+          }
+        } else {
+          console.error('Error fetching bus location:', data.message);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
     }
     
-    // Helper function to calculate distance between two coordinates
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371; // Radius of the earth in km
-      const dLat = deg2rad(lat2 - lat1);
-      const dLon = deg2rad(lon2 - lon1);
-      const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2); 
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-      const distance = R * c; // Distance in km
-      return distance;
+    // Function to draw route using OSRM
+    async function drawRoute(start, end) {
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch route');
+        }
+        
+        const routeData = await response.json();
+        
+        if (routeData.code === 'Ok' && routeData.routes && routeData.routes.length > 0) {
+          const route = routeData.routes[0];
+          const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          
+          // Draw the route line
+          routeLine = L.polyline(routeCoordinates, {
+            color: '#3a86ff',
+            weight: 5,
+            opacity: 0.8,
+            lineJoin: 'round',
+            className: 'route-line'
+          }).addTo(map);
+          
+          // Add distance and duration to popup
+          const distance = (route.distance / 1000).toFixed(1); // km
+          const duration = Math.round(route.duration / 60); // minutes
+          
+          routeLine.bindPopup(`
+            <div class="route-popup">
+              <strong>Route Information</strong><br>
+              Distance: ${distance} km<br>
+              Estimated Time: ${duration} minutes
+            </div>
+          `);
+          
+          return routeLine;
+        }
+      } catch (error) {
+        console.error('Error drawing route:', error);
+        return null;
+      }
     }
     
-    function deg2rad(deg) {
-      return deg * (Math.PI/180);
+    // Function to get student's current location
+    function getStudentLocation() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          console.warn('Geolocation is not supported by your browser');
+          resolve(null);
+          return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            });
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            resolve(null);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      });
     }
-    
+
+    // Add student location marker
+    async function updateStudentLocation() {
+      try {
+        const studentLocation = await getStudentLocation();
+        if (!studentLocation) return;
+        
+        // Remove existing student marker if it exists
+        if (studentMarker) map.removeLayer(studentMarker);
+        
+        // Add/update student marker
+        studentMarker = L.marker([studentLocation.lat, studentLocation.lng], {
+          icon: L.divIcon({
+            html: '<i class="fas fa-user-graduate" style="color: #28a745; font-size: 24px;"></i>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24],
+            className: 'student-marker'
+          })
+        }).addTo(map);
+        
+        studentMarker.bindPopup('<strong>Your Location</strong><br>Accuracy: ' + Math.round(studentLocation.accuracy) + ' meters');
+      } catch (error) {
+        console.error('Error getting student location:', error);
+      }
+    }
+
     // Initial update
     updateBusLocation();
     
-    // Refresh location every 30 seconds
-    setInterval(updateBusLocation, 30000);
+    // Update location every 10 seconds
+    setInterval(updateBusLocation, 10000);
   });
 </script>
 <% } %>

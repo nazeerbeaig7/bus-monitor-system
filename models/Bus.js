@@ -38,19 +38,36 @@ const BusSchema = new mongoose.Schema({
     type: String,
     default: 'Not specified'
   },
-  currentCoordinates: {
-    lat: {
-      type: Number,
-      default: null
+  // Real-time tracking information
+  tracking: {
+    isActive: {
+      type: Boolean,
+      default: false
     },
-    lon: {
-      type: Number,
-      default: null
-    },
-    lastUpdated: {
+    lastUpdate: {
       type: Date,
       default: null
+    },
+    coordinates: {
+      lat: { type: Number, default: null },
+      lon: { type: Number, default: null },
+      accuracy: { type: Number, default: null }, // Accuracy in meters
+      speed: { type: Number, default: null },    // Speed in km/h
+      heading: { type: Number, default: null },  // Bearing in degrees
+      altitude: { type: Number, default: null }  // Altitude in meters
+    },
+    deviceInfo: {
+      deviceId: String,
+      deviceModel: String,
+      appVersion: String,
+      lastSeen: Date
     }
+  },
+  // Legacy location field (kept for backward compatibility)
+  currentCoordinates: {
+    lat: { type: Number, default: null },
+    lon: { type: Number, default: null },
+    lastUpdated: { type: Date, default: null }
   },
   boardingPoint: {
     name: {

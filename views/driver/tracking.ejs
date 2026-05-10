@@ -1,0 +1,346 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Live Bus Tracking</h4>
+        </div>
+        <div class="card-body">
+          <div id="map" style="height: 400px; width: 100%; margin-bottom: 20px; border-radius: 8px;"></div>
+          
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h5 class="card-title">Tracking Status</h5>
+                  <div id="status-indicator" class="d-flex align-items-center mb-3">
+                    <div id="status-dot" class="rounded-circle bg-secondary me-2" style="width: 15px; height: 15px;"></div>
+                    <span id="status-text">Inactive</span>
+                  </div>
+                  <div class="d-grid gap-2">
+                    <button id="toggle-tracking" class="btn btn-primary">
+                      <i class="fas fa-play me-2"></i>Start Tracking
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Location Details</h5>
+                  <div class="mb-2">
+                    <small class="text-muted">Latitude:</small>
+                    <div id="latitude" class="fw-bold">-</div>
+                  </div>
+                  <div class="mb-2">
+                    <small class="text-muted">Longitude:</small>
+                    <div id="longitude" class="fw-bold">-</div>
+                  </div>
+                  <div class="mb-2">
+                    <small class="text-muted">Accuracy:</small>
+                    <div id="accuracy" class="fw-bold">-</div>
+                  </div>
+                  <div class="mb-2">
+                    <small class="text-muted">Last Update:</small>
+                    <div id="last-update" class="fw-bold">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Activity Log</h5>
+            </div>
+            <div class="card-body p-0">
+              <div id="activity-log" style="max-height: 200px; overflow-y: auto;">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item text-muted">No activity yet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include the GPS Tracker script -->
+<script src="/js/gps-tracker.js"></script>
+<script>
+  // Initialize map
+  let map;
+  let marker;
+  let watchId = null;
+  let isTracking = false;
+  const busId = '<%= user.id %>'; // Get bus ID from the server
+  
+  // Initialize the tracker
+  const tracker = new GPSTracker({
+    busId: busId,
+    updateInterval: 10000, // 10 seconds
+    highAccuracy: true
+  });
+
+  // Initialize the map
+  function initMap(position) {
+    const lat = position ? position.coords.latitude : 20.5937; // Default to India
+    const lng = position ? position.coords.longitude : 78.9629;
+    
+    map = L.map('map').setView([lat, lng], 15);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Add the route (example coordinates - replace with actual route coordinates)
+    const routeCoordinates = [
+      [20.5937, 78.9629], // Start point (India)
+      [20.6000, 78.9700], // Waypoint 1
+      [20.6100, 78.9800], // Waypoint 2
+      [20.6200, 78.9900]  // End point
+    ];
+
+    // Draw the route line
+    const routeLine = L.polyline(routeCoordinates, {
+      color: '#0d6efd',
+      weight: 5,
+      opacity: 0.7,
+      dashArray: '10, 10',
+      lineJoin: 'round'
+    }).addTo(map);
+
+    // Add start and end markers
+    L.marker(routeCoordinates[0], {
+      icon: L.divIcon({
+        html: '<i class="fas fa-map-marker-alt" style="color: #28a745; font-size: 24px;"></i>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 24],
+        className: 'route-marker'
+      })
+    }).addTo(map).bindPopup('Start Point');
+
+    L.marker(routeCoordinates[routeCoordinates.length - 1], {
+      icon: L.divIcon({
+        html: '<i class="fas fa-flag-checkered" style="color: #dc3545; font-size: 24px;"></i>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 24],
+        className: 'route-marker'
+      })
+    }).addTo(map).bindPopup('End Point');
+    
+    // Add a marker for the current position
+    marker = L.marker([lat, lng], {
+      icon: L.divIcon({
+        html: '<i class="fas fa-bus" style="color: #0d6efd; font-size: 24px;"></i>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        className: 'bus-marker'
+      })
+    }).addTo(map);
+    
+    // Add a circle to show accuracy
+    let circle = L.circle([lat, lng], {
+      color: '#0d6efd',
+      fillColor: '#0d6efd',
+      fillOpacity: 0.2,
+      radius: position ? position.coords.accuracy : 50
+    }).addTo(map);
+
+    // Fit the map to show the entire route
+    map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+    
+    return { marker, circle, routeLine };
+  }
+  
+  // Update the map with new position
+  function updateMap(position) {
+    const { latitude, longitude, accuracy, heading } = position.coords;
+    const newLatLng = L.latLng(latitude, longitude);
+    
+    if (!map) {
+      const { marker: newMarker, circle } = initMap(position);
+      marker = newMarker;
+      currentCircle = circle;
+    } else {
+      // Update bus marker with rotation based on heading
+      const rotation = heading !== null ? heading - 90 : 0;
+      marker.setLatLng(newLatLng);
+      marker.setIcon(L.divIcon({
+        html: `<i class="fas fa-bus" style="color: #0d6efd; font-size: 24px; transform: rotate(${rotation}deg); display: inline-block;"></i>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        className: 'bus-marker'
+      }));
+      
+      if (currentCircle) {
+        map.removeLayer(currentCircle);
+      }
+      currentCircle = L.circle([latitude, longitude], {
+        color: '#0d6efd',
+        fillColor: '#0d6efd',
+        fillOpacity: 0.2,
+        radius: accuracy
+      }).addTo(map);
+      
+      // Smoothly pan to the new position
+      map.panTo(newLatng, { animate: true, duration: 1 });
+    }
+    
+    // Update location details
+    document.getElementById('latitude').textContent = latitude.toFixed(6);
+    document.getElementById('longitude').textContent = longitude.toFixed(6);
+    document.getElementById('accuracy').textContent = `${Math.round(accuracy)} meters`;
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    
+    // Add to activity log
+    addActivityLog(`Location updated (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`, 'info');
+  }
+  
+  // Add an entry to the activity log
+  function addActivityLog(message, type = 'info') {
+    const activityLog = document.querySelector('#activity-log .list-group');
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    
+    // Create new log entry
+    const logEntry = document.createElement('div');
+    logEntry.className = `list-group-item list-group-item-action ${getLogTypeClass(type)}`;
+    logEntry.innerHTML = `
+      <div class="d-flex w-100 justify-content-between">
+        <span>${message}</span>
+        <small class="text-muted">${timeString}</small>
+      </div>
+    `;
+    
+    // Add to the top of the log
+    if (activityLog.firstChild && activityLog.firstChild.classList.contains('text-muted')) {
+      activityLog.removeChild(activityLog.firstChild);
+    }
+    activityLog.insertBefore(logEntry, activityLog.firstChild);
+    
+    // Auto-scroll to top
+    activityLog.scrollTop = 0;
+  }
+  
+  // Get CSS class for log type
+  function getLogTypeClass(type) {
+    const types = {
+      'success': 'list-group-item-success',
+      'error': 'list-group-item-danger',
+      'warning': 'list-group-item-warning',
+      'info': 'list-group-item-info'
+    };
+    return types[type] || '';
+  }
+  
+  // Update status indicator
+  function updateStatus(status) {
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const toggleButton = document.getElementById('toggle-tracking');
+    
+    switch(status) {
+      case 'tracking_started':
+        statusDot.className = 'rounded-circle bg-success me-2';
+        statusText.textContent = 'Active';
+        toggleButton.innerHTML = '<i class="fas fa-stop me-2"></i>Stop Tracking';
+        toggleButton.className = 'btn btn-danger';
+        isTracking = true;
+        break;
+        
+      case 'tracking_stopped':
+        statusDot.className = 'rounded-circle bg-secondary me-2';
+        statusText.textContent = 'Inactive';
+        toggleButton.innerHTML = '<i class="fas fa-play me-2"></i>Start Tracking';
+        toggleButton.className = 'btn btn-primary';
+        isTracking = false;
+        break;
+        
+      case 'connected':
+        statusDot.className = 'rounded-circle bg-success me-2';
+        statusText.textContent = 'Connected';
+        addActivityLog('Connected to tracking server', 'success');
+        break;
+        
+      case 'disconnected':
+        statusDot.className = 'rounded-circle bg-warning me-2';
+        statusText.textContent = 'Disconnected';
+        addActivityLog('Disconnected from server. Attempting to reconnect...', 'warning');
+        break;
+    }
+  }
+  
+  // Handle errors
+  function handleError(error) {
+    console.error('GPS Error:', error);
+    let errorMessage = 'Unknown error occurred';
+    
+    switch(error.code) {
+      case error.PERMISSION_DENIED:
+        errorMessage = 'Location access was denied. Please enable location services.';
+        break;
+      case error.POSITION_UNAVAILABLE:
+        errorMessage = 'Location information is unavailable.';
+        break;
+      case error.TIMEOUT:
+        errorMessage = 'The request to get location timed out.';
+        break;
+    }
+    
+    addActivityLog(`Error: ${errorMessage}`, 'error');
+  }
+  
+  // Toggle tracking
+  document.getElementById('toggle-tracking').addEventListener('click', function() {
+    if (isTracking) {
+      tracker.stopTracking();
+    } else {
+      // Request location permission
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            updateMap(position);
+            tracker.startTracking();
+          },
+          handleError,
+          { enableHighAccuracy: true }
+        );
+      } else {
+        addActivityLog('Geolocation is not supported by this browser', 'error');
+      }
+    }
+  });
+  
+  // Set up event listeners
+  tracker
+    .onPositionUpdate(updateMap)
+    .onError(handleError)
+    .onStatusChange(updateStatus);
+  
+  // Initialize the map with default position
+  document.addEventListener('DOMContentLoaded', function() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        initMap,
+        function() {
+          // If user denies location, initialize with default coordinates
+          initMap(null);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      // Fallback if geolocation is not supported
+      initMap(null);
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

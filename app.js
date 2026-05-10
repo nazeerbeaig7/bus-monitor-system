@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const methodOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
@@ -10,10 +12,26 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize GPS Tracker
+const GPSTracker = require('./services/gpstracker');
+const gpsTracker = new GPSTracker(io);
+
+// Make io and gpsTracker available in routes
+app.set('io', io);
+app.set('gpsTracker', gpsTracker);
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
@@ -61,6 +79,7 @@ app.use('/student', studentRoutes);
 app.use('/driver', driverRoutes);
 app.use('/management', managementRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});   
+// Start server with WebSocket support
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} with WebSocket support`);
+});

@@ -195,6 +195,14 @@ router.get('/api/bus-location/:busId', ensureStudent, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Bus not found' });
     }
     
+    // Add example route coordinates (in a real app, this would come from your database)
+    const routeCoordinates = [
+      [20.5937, 78.9629],  // Example coordinates (India)
+      [20.6000, 78.9700],
+      [20.6100, 78.9800],
+      [20.6200, 78.9900]
+    ];
+
     res.json({
       success: true,
       busId: bus.busId,
@@ -203,7 +211,12 @@ router.get('/api/bus-location/:busId', ensureStudent, async (req, res) => {
       coordinates: bus.currentCoordinates,
       boardingPoint: bus.boardingPoint,
       destinationPoint: bus.destinationPoint,
-      lastUpdated: bus.currentCoordinates.lastUpdated
+      lastUpdated: bus.currentCoordinates.lastUpdated,
+      routeCoordinates: routeCoordinates,
+      // Add current position for the bus marker
+      latitude: bus.currentCoordinates?.lat || 20.5937,
+      longitude: bus.currentCoordinates?.lon || 78.9629,
+      heading: bus.currentCoordinates?.heading || 0
     });
   } catch (err) {
     console.error('Error fetching bus location:', err);
